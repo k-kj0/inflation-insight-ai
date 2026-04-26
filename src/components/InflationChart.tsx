@@ -50,9 +50,9 @@ export function InflationChart({ data }: Props) {
             fontSize: 12,
           }}
           labelStyle={{ color: "oklch(0.92 0.21 125)", fontWeight: 600 }}
-          formatter={(v: number | null, name) => {
-            if (v == null) return ["—", name];
-            return [`${v.toFixed(2)}%`, name];
+          formatter={(v, name) => {
+            if (v == null) return ["—", name as string];
+            return [`${Number(v).toFixed(2)}%`, name as string];
           }}
         />
         <Area
