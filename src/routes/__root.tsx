@@ -38,6 +38,13 @@ export const Route = createRootRoute({
       { name: "author", content: "InflationIQ" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "InflationIQ — Your Personal Economic Intelligence Layer" },
+      { name: "twitter:title", content: "InflationIQ — Your Personal Economic Intelligence Layer" },
+      { name: "description", content: "AI-powered inflation predictor providing country/timeframe forecasts, risk analysis, and investment recommendations." },
+      { property: "og:description", content: "AI-powered inflation predictor providing country/timeframe forecasts, risk analysis, and investment recommendations." },
+      { name: "twitter:description", content: "AI-powered inflation predictor providing country/timeframe forecasts, risk analysis, and investment recommendations." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/91c014d1-8b05-4d2c-81cf-ddd30d4d51e1/id-preview-e6ea684f--62b2e81d-a731-421a-8e69-54c5ebda1477.lovable.app-1777225087752.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/91c014d1-8b05-4d2c-81cf-ddd30d4d51e1/id-preview-e6ea684f--62b2e81d-a731-421a-8e69-54c5ebda1477.lovable.app-1777225087752.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
