@@ -1,0 +1,134 @@
+{
+  "/home/runner/work/inflation-insight-ai/inflation-insight-ai/src/styles.css": {
+    "file": "assets/styles-BSKQfNti.css",
+    "src": "/home/runner/work/inflation-insight-ai/inflation-insight-ai/src/styles.css"
+  },
+  "_SiteHeader-B-kPMEQX.js": {
+    "file": "assets/SiteHeader-B-kPMEQX.js",
+    "name": "SiteHeader",
+    "imports": [
+      "_worker-entry-BGTTXPO5.js",
+      "_router-CXsUoBOm.js"
+    ]
+  },
+  "_Ticker-Dc1Lv_oZ.js": {
+    "file": "assets/Ticker-Dc1Lv_oZ.js",
+    "name": "Ticker",
+    "imports": [
+      "_worker-entry-BGTTXPO5.js"
+    ]
+  },
+  "_router-CXsUoBOm.js": {
+    "file": "assets/router-CXsUoBOm.js",
+    "name": "router",
+    "isDynamicEntry": true,
+    "imports": [
+      "_worker-entry-BGTTXPO5.js"
+    ],
+    "dynamicImports": [
+      "src/routes/pricing.tsx?tsr-split=component",
+      "src/routes/predictor.tsx?tsr-split=component",
+      "src/routes/api.tsx?tsr-split=component",
+      "src/routes/index.tsx?tsr-split=component"
+    ],
+    "assets": [
+      "assets/styles-BSKQfNti.css"
+    ]
+  },
+  "_sparkles-Bww9dFvZ.js": {
+    "file": "assets/sparkles-Bww9dFvZ.js",
+    "name": "sparkles",
+    "imports": [
+      "_SiteHeader-B-kPMEQX.js"
+    ]
+  },
+  "_worker-entry-BGTTXPO5.js": {
+    "file": "assets/worker-entry-BGTTXPO5.js",
+    "name": "worker-entry",
+    "dynamicImports": [
+      "tanstack-start-manifest:v",
+      "src/server/ai.functions.ts?tss-serverfn-split",
+      "_router-CXsUoBOm.js",
+      "node_modules/@tanstack/react-start/dist/plugin/default-entry/start.ts"
+    ]
+  },
+  "node_modules/@tanstack/react-start/dist/plugin/default-entry/start.ts": {
+    "file": "assets/start-HYkvq4Ni.js",
+    "name": "start",
+    "src": "node_modules/@tanstack/react-start/dist/plugin/default-entry/start.ts",
+    "isDynamicEntry": true
+  },
+  "src/routes/api.tsx?tsr-split=component": {
+    "file": "assets/api-8YzOpMMj.js",
+    "name": "api",
+    "src": "src/routes/api.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "_worker-entry-BGTTXPO5.js",
+      "_router-CXsUoBOm.js",
+      "_SiteHeader-B-kPMEQX.js"
+    ]
+  },
+  "src/routes/index.tsx?tsr-split=component": {
+    "file": "assets/index-BWhtbZyi.js",
+    "name": "index",
+    "src": "src/routes/index.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "_worker-entry-BGTTXPO5.js",
+      "_router-CXsUoBOm.js",
+      "_SiteHeader-B-kPMEQX.js",
+      "_Ticker-Dc1Lv_oZ.js",
+      "_sparkles-Bww9dFvZ.js"
+    ]
+  },
+  "src/routes/predictor.tsx?tsr-split=component": {
+    "file": "assets/predictor-DBX3bY7m.js",
+    "name": "predictor",
+    "src": "src/routes/predictor.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "_worker-entry-BGTTXPO5.js",
+      "_SiteHeader-B-kPMEQX.js",
+      "_Ticker-Dc1Lv_oZ.js",
+      "_sparkles-Bww9dFvZ.js",
+      "_router-CXsUoBOm.js"
+    ]
+  },
+  "src/routes/pricing.tsx?tsr-split=component": {
+    "file": "assets/pricing-BR8sNjaZ.js",
+    "name": "pricing",
+    "src": "src/routes/pricing.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "_worker-entry-BGTTXPO5.js",
+      "_router-CXsUoBOm.js",
+      "_SiteHeader-B-kPMEQX.js",
+      "_sparkles-Bww9dFvZ.js"
+    ]
+  },
+  "src/server/ai.functions.ts?tss-serverfn-split": {
+    "file": "assets/ai.functions-DZySZJe4.js",
+    "name": "ai.functions",
+    "src": "src/server/ai.functions.ts?tss-serverfn-split",
+    "isDynamicEntry": true,
+    "imports": [
+      "_worker-entry-BGTTXPO5.js"
+    ]
+  },
+  "tanstack-start-manifest:v": {
+    "file": "assets/_tanstack-start-manifest_v-C-P0mvLM.js",
+    "name": "_tanstack-start-manifest_v",
+    "src": "tanstack-start-manifest:v",
+    "isDynamicEntry": true
+  },
+  "virtual:cloudflare/worker-entry": {
+    "file": "index.js",
+    "name": "index",
+    "src": "virtual:cloudflare/worker-entry",
+    "isEntry": true,
+    "imports": [
+      "_worker-entry-BGTTXPO5.js"
+    ]
+  }
+}
