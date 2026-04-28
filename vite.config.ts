@@ -11,5 +11,5 @@ export default defineConfig({
     tsconfigPaths(),
     cloudflare(),
   ],
-  base: "/inflation-insight-ai/", // REQUIRED for GitHub Pages
+  base: "/inflation-insight-ai/",
 });
