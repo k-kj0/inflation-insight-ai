@@ -1,12 +1,22 @@
-import { defineConfig } from "@tanstack/react-start/config";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  tsr: {
-    autoCodeSplitting: true,
-  },
-  vite: {
-    base: "/inflation-insight-ai/",
-    plugins: [tsconfigPaths()],
+  base: "/inflation-insight-ai/",
+  plugins: [
+    TanStackRouterVite({ autoCodeSplitting: true }),
+    react(),
+    tsconfigPaths(),
+    tailwindcss(),
+  ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: "./index.html",
+      },
+    },
   },
 });
