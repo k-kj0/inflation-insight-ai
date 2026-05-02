@@ -78,7 +78,7 @@ export function InfluxAIPanel(props: Props) {
           </div>
         </div>
         <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          claude-3.5-sonnet · {props.remaining} left today
+          influx-demo · {props.remaining} left today
         </div>
       </div>
 
@@ -86,8 +86,8 @@ export function InfluxAIPanel(props: Props) {
         {!result && !loading && !error && (
           <div className="flex flex-col items-start gap-4">
             <p className="max-w-xl text-sm text-muted-foreground">
-              Generate a real-time macro analysis: risk narrative, business impact, and a
-              concrete investment signal — produced live by Claude on your selected
+              Generate a macro analysis: risk narrative, business impact, and a
+              concrete investment signal — generated live for your selected
               {" "}
               <span className="font-mono text-foreground">{props.country}</span> ·{" "}
               <span className="font-mono text-foreground">{props.commodity}</span> forecast.
@@ -97,7 +97,7 @@ export function InfluxAIPanel(props: Props) {
               className="group inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary-foreground transition-all hover:glow"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              Analyze with Claude
+              Run INFLUX Analysis
             </button>
           </div>
         )}
