@@ -1,10 +1,3 @@
-<img width="1898" height="797" alt="image" src="https://github.com/user-attachments/assets/1256d846-4bf8-43e3-bfeb-8547b26de5d8" />
-<img width="1880" height="849" alt="image" src="https://github.com/user-attachments/assets/393072e9-96cf-42b4-9461-8a0047a223af" />
-<img width="1863" height="863" alt="image" src="https://github.com/user-attachments/assets/82327093-f258-43c7-bb72-108b54a3a033" />
-<img width="1898" height="823" alt="image" src="https://github.com/user-attachments/assets/f31e1f13-881e-4137-8c05-b00582584202" />
-<img width="1887" height="856" alt="image" src="https://github.com/user-attachments/assets/1df64747-aa0e-4128-9237-81801bb30ac5" />
-<img width="1884" height="863" alt="image" src="https://github.com/user-attachments/assets/41f9c096-6640-48da-be6c-43da5d7ba807" />
-
 # InflationIQ — Your Personal Economic Intelligence Layer
  
 <div align="center">
