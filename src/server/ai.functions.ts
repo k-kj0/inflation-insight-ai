@@ -24,6 +24,179 @@ export interface AnalysisResult {
   error?: string;
 }
 
+// ---------- Mock generation (no external API, no key required) ----------
+
+const COMMODITY_RISKS: Record<string, string[]> = {
+  oil: [
+    "OPEC+ supply discipline tightening crude balances",
+    "Middle East shipping disruptions lifting freight premia",
+    "Strategic Petroleum Reserve refill pressure",
+    "Refining margin spillover into core CPI",
+  ],
+  natgas: [
+    "European storage refill cycle ahead of winter",
+    "LNG export terminal outages compressing US supply",
+    "Weather-driven heating demand variance",
+    "Industrial demand re-acceleration in Asia",
+  ],
+  wheat: [
+    "Black Sea export corridor fragility",
+    "El Niño / La Niña yield variance in key exporters",
+    "Fertilizer cost pass-through from natgas",
+    "Food protectionism and export bans",
+  ],
+  copper: [
+    "China property and grid investment cycle",
+    "Chilean and Peruvian mine supply disruptions",
+    "Energy transition demand from EVs and grid",
+    "Inventory destock at LME warehouses",
+  ],
+  coffee: [
+    "Brazilian arabica frost and drought risk",
+    "Vietnamese robusta export tightness",
+    "Shipping container rates from origin markets",
+    "Specialty roaster pass-through to consumers",
+  ],
+  gold: [
+    "Real yields and DXY trajectory",
+    "Central bank reserve diversification flows",
+    "Geopolitical hedging demand",
+    "ETF positioning unwind risk",
+  ],
+  semiconductors: [
+    "Taiwan Strait geopolitical premium",
+    "AI capex driving leading-edge node tightness",
+    "Memory cycle bottoming and pricing power return",
+    "Export controls reshaping supply chains",
+  ],
+  general: [
+    "Wage growth stickiness in services",
+    "Shelter and rent disinflation pace",
+    "Goods deflation reversal from supply normalization",
+    "Currency pass-through from FX volatility",
+  ],
+};
+
+const COUNTRY_CONTEXT: Record<string, string> = {
+  US: "Federal Reserve dual mandate posture and labor market resilience",
+  EU: "ECB policy divergence and energy import dependency",
+  UK: "BoE services inflation focus and post-Brexit trade frictions",
+  JP: "BoJ policy normalization and yen pass-through",
+  BR: "BCB real rate cushion and fiscal dominance fears",
+  IN: "RBI inflation targeting and food weight in CPI basket",
+  TR: "CBRT credibility rebuild and lira stabilization arc",
+  AR: "Currency regime transition and price liberalization shocks",
+};
+
+const COUNTRY_INSTRUMENTS: Record<string, string[]> = {
+  US: ["TIPS", "SCHP", "GLD"],
+  EU: ["DBEZ", "FEZ", "EUFN"],
+  UK: ["EWU", "FLGB", "INXG.L"],
+  JP: ["DXJ", "EWJ", "FLJP"],
+  BR: ["EWZ", "BRZU", "ILF"],
+  IN: ["INDA", "EPI", "SMIN"],
+  TR: ["TUR"],
+  AR: ["ARGT"],
+};
+
+function pick<T>(arr: T[], rand: () => number, n: number): T[] {
+  const copy = [...arr];
+  const out: T[] = [];
+  for (let i = 0; i < n && copy.length; i++) {
+    const idx = Math.floor(rand() * copy.length);
+    out.push(copy.splice(idx, 1)[0]);
+  }
+  return out;
+}
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function generateMock(data: AnalysisInput): AnalysisResult {
+  const seed =
+    data.country.charCodeAt(0) * 131 +
+    data.commodity.length * 977 +
+    Math.round(data.predicted * 100) +
+    data.horizon;
+  const rand = mulberry32(seed);
+
+  const direction = data.delta > 0.3 ? "rising" : data.delta < -0.3 ? "easing" : "range-bound";
+  const ctx = COUNTRY_CONTEXT[data.country] ?? "domestic monetary policy stance";
+  const risks = pick(COMMODITY_RISKS[data.commodity] ?? COMMODITY_RISKS.general, rand, 3 + Math.floor(rand() * 2));
+
+  // Action logic
+  let action: AnalysisResult["investmentSignal"]["action"];
+  if (data.predicted > 6 || data.riskScore > 70) action = "HEDGE";
+  else if (data.delta > 0.8) action = "BUY";
+  else if (data.delta < -0.8) action = "SELL";
+  else action = "HOLD";
+
+  const headlineMap = {
+    HEDGE: `Elevated ${direction} inflation in ${data.country} demands portfolio hedges now`,
+    BUY: `${data.country} reflation print supports real-asset and inflation-linked exposure`,
+    SELL: `Disinflation in ${data.country} opens room to fade defensive inflation trades`,
+    HOLD: `${data.country} inflation drift stays orderly — stay patient, stay positioned`,
+  };
+
+  const narrative =
+    `Our ${data.horizon}-month forecast for ${data.country} lands at ${data.predicted}% versus a current ${data.current}%, ` +
+    `a ${data.delta > 0 ? "+" : ""}${data.delta}pp move shaped largely by ${data.commodity === "general" ? "headline basket dynamics" : data.commodity + " transmission"}. ` +
+    `The path is anchored by ${ctx}, with a volatility index of ${data.volatility} signalling ${data.volatility > 1.8 ? "fat-tailed" : "contained"} dispersion around the central case. ` +
+    `Risk score ${data.riskScore}/100 places this regime in the ${data.riskScore > 70 ? "high-alert" : data.riskScore > 40 ? "watchful" : "benign"} bucket for asset allocators.`;
+
+  const businessImpact =
+    action === "HEDGE"
+      ? `Margin pressure intensifies for import-heavy and labor-intensive sectors; pricing-power leaders outperform laggards. Households face renewed real-income squeeze, biasing discretionary spend down and staples up.`
+      : action === "SELL"
+        ? `Disinflation restores real wages and unlocks discretionary consumption, particularly for big-ticket and credit-sensitive categories. Corporates regain input-cost relief but lose top-line pricing tailwinds.`
+        : action === "BUY"
+          ? `Reflation rewards firms with proven pass-through and asset-heavy balance sheets. Consumers feel sticker shock in food and energy, accelerating private-label substitution.`
+          : `Stable inflation underwrites planning visibility for capex and consumer durables. Wage-price loops remain dormant, keeping real-rate paths predictable.`;
+
+  const baseInstruments = COUNTRY_INSTRUMENTS[data.country] ?? ["TIPS", "GLD"];
+  const commodityInstruments: Record<string, string[]> = {
+    oil: ["USO", "XLE"],
+    natgas: ["UNG", "FCG"],
+    wheat: ["WEAT", "DBA"],
+    copper: ["CPER", "COPX"],
+    coffee: ["JO"],
+    gold: ["GLD", "GDX"],
+    semiconductors: ["SOXX", "SMH"],
+    general: ["TIP", "SCHP"],
+  };
+  const instruments = [
+    ...pick(baseInstruments, rand, Math.min(2, baseInstruments.length)),
+    ...pick(commodityInstruments[data.commodity] ?? ["TIP"], rand, 1),
+  ];
+
+  const rationaleMap = {
+    HEDGE: `Tail risk on the upside justifies real-asset overlays and breakeven longs into the print.`,
+    BUY: `Forward path skews higher; inflation-linked and real-asset beta should outperform nominal duration.`,
+    SELL: `Path-of-least-resistance is lower CPI; trim defensive inflation hedges and add duration selectively.`,
+    HOLD: `Risk-reward is symmetric — wait for a regime break before resizing the inflation book.`,
+  };
+
+  return {
+    headline: headlineMap[action],
+    narrative,
+    riskFactors: risks,
+    businessImpact,
+    investmentSignal: {
+      action,
+      rationale: rationaleMap[action],
+      instruments,
+    },
+  };
+}
+
 export const analyzeInflation = createServerFn({ method: "POST" })
   .inputValidator((input: AnalysisInput) => {
     if (!input || typeof input.country !== "string") {
@@ -32,99 +205,7 @@ export const analyzeInflation = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ data }): Promise<AnalysisResult> => {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return {
-        headline: "AI service not configured",
-        narrative: "ANTHROPIC_API_KEY is missing on the server.",
-        riskFactors: [],
-        businessImpact: "",
-        investmentSignal: { action: "HOLD", rationale: "", instruments: [] },
-        error: "missing_key",
-      };
-    }
-
-    const prompt = `You are INFLUX AI, an economist for InflationIQ. Analyze this inflation forecast and respond ONLY with valid JSON matching the schema.
-
-Context:
-- Country: ${data.country}
-- Driver: ${data.commodity}
-- Horizon: ${data.horizon} months
-- Current YoY inflation: ${data.current}%
-- Forecast YoY inflation: ${data.predicted}% (delta ${data.delta > 0 ? "+" : ""}${data.delta} pp)
-- Volatility index: ${data.volatility}
-- Risk score: ${data.riskScore}/100
-
-Return JSON with this exact shape:
-{
-  "headline": "one punchy sentence, max 14 words",
-  "narrative": "2-3 sentence macro analysis grounded in real economic dynamics",
-  "riskFactors": ["3 to 4 concrete risk drivers, each under 12 words"],
-  "businessImpact": "2 sentences on how this affects businesses & consumers",
-  "investmentSignal": {
-    "action": "BUY" | "HOLD" | "SELL" | "HEDGE",
-    "rationale": "1 sentence why",
-    "instruments": ["2-3 specific tickers/instruments e.g. TIPS, GLD, USO, EWZ"]
-  }
-}
-
-No markdown, no preamble, just the JSON object.`;
-
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
-          max_tokens: 800,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        console.error("Anthropic error:", res.status, txt);
-        return {
-          headline: "AI temporarily unavailable",
-          narrative: `Claude API returned ${res.status}. Try again shortly.`,
-          riskFactors: [],
-          businessImpact: "",
-          investmentSignal: { action: "HOLD", rationale: "", instruments: [] },
-          error: `api_${res.status}`,
-        };
-      }
-
-      const json = await res.json();
-      const text: string = json?.content?.[0]?.text ?? "";
-
-      // Extract first JSON object
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) {
-        return {
-          headline: "AI returned unparseable output",
-          narrative: text.slice(0, 240),
-          riskFactors: [],
-          businessImpact: "",
-          investmentSignal: { action: "HOLD", rationale: "", instruments: [] },
-          error: "parse_error",
-        };
-      }
-
-      const parsed = JSON.parse(match[0]) as AnalysisResult;
-      return parsed;
-    } catch (err) {
-      console.error("analyzeInflation failed:", err);
-      return {
-        headline: "Analysis failed",
-        narrative: err instanceof Error ? err.message : "Unknown error",
-        riskFactors: [],
-        businessImpact: "",
-        investmentSignal: { action: "HOLD", rationale: "", instruments: [] },
-        error: "exception",
-      };
-    }
+    // Simulate a realistic latency so the "AI is reasoning…" UX still lands.
+    await new Promise((r) => setTimeout(r, 900 + Math.random() * 700));
+    return generateMock(data);
   });
