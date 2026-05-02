@@ -1,4 +1,4 @@
-import { T as jsxRuntimeExports } from "./worker-entry-BGTTXPO5.js";
+import { V as jsxRuntimeExports } from "./worker-entry-C6G48CJd.js";
 function Ticker() {
   const items = [
     { sym: "US CPI", val: "2.9%", chg: "+0.2" },

@@ -1207,7 +1207,7 @@ function requireReact_production() {
   react_production.useTransition = function() {
     return ReactSharedInternals.H.useTransition();
   };
-  react_production.version = "19.2.4";
+  react_production.version = "19.2.5";
   return react_production;
 }
 var hasRequiredReact;
@@ -1221,7 +1221,7 @@ function requireReact() {
 }
 var reactExports = requireReact();
 const React = /* @__PURE__ */ getDefaultExportFromCjs(reactExports);
-var isServer = true;
+const isServer = true;
 function last(arr) {
   return arr[arr.length - 1];
 }
@@ -1232,8 +1232,13 @@ function functionalUpdate(updater, previous) {
   if (isFunction(updater)) return updater(previous);
   return updater;
 }
-var createNull = () => /* @__PURE__ */ Object.create(null);
-var nullReplaceEqualDeep = (prev, next) => replaceEqualDeep(prev, next, createNull);
+const hasOwn = Object.prototype.hasOwnProperty;
+function hasKeys(obj) {
+  for (const key in obj) if (hasOwn.call(obj, key)) return true;
+  return false;
+}
+const createNull = () => /* @__PURE__ */ Object.create(null);
+const nullReplaceEqualDeep = (prev, next) => replaceEqualDeep(prev, next, createNull);
 function replaceEqualDeep(prev, _next, _makeObj = () => ({}), _depth = 0) {
   return _next;
 }
@@ -1322,7 +1327,7 @@ function decodeSegment(segment) {
   }
   return sanitizePathSegment(decoded);
 }
-var DEFAULT_PROTOCOL_ALLOWLIST = [
+const DEFAULT_PROTOCOL_ALLOWLIST = [
   "http:",
   "https:",
   "mailto:",
@@ -1337,14 +1342,14 @@ function isDangerousProtocol(url, allowlist) {
     return false;
   }
 }
-var HTML_ESCAPE_LOOKUP = {
+const HTML_ESCAPE_LOOKUP = {
   "&": "\\u0026",
   ">": "\\u003e",
   "<": "\\u003c",
   "\u2028": "\\u2028",
   "\u2029": "\\u2029"
 };
-var HTML_ESCAPE_REGEX = /[&><\u2028\u2029]/g;
+const HTML_ESCAPE_REGEX = /[&><\u2028\u2029]/g;
 function escapeHtml(str) {
   return str.replace(HTML_ESCAPE_REGEX, (match) => HTML_ESCAPE_LOOKUP[match]);
 }
@@ -1454,8 +1459,8 @@ function createLRUCache(max) {
     }
   };
 }
-var SEGMENT_TYPE_INDEX = 4;
-var SEGMENT_TYPE_PATHLESS = 5;
+const SEGMENT_TYPE_INDEX = 4;
+const SEGMENT_TYPE_PATHLESS = 5;
 function getOpenAndCloseBraces(part) {
   const openBrace = part.indexOf("{");
   if (openBrace === -1) return null;
@@ -1550,7 +1555,7 @@ function parseSegments(defaultCaseSensitive, data, route, start, node, depth, on
     const path = route.fullPath ?? route.from;
     const length = path.length;
     const caseSensitive = route.options?.caseSensitive ?? defaultCaseSensitive;
-    const skipOnParamError = !!(route.options?.params?.parse && route.options?.skipRouteOnParseError?.params);
+    const parseParams = route.options?.params?.parse ?? route.options?.parseParams;
     while (cursor < length) {
       const segment = parseSegment(path, cursor, data);
       let nextNode;
@@ -1593,7 +1598,7 @@ function parseSegments(defaultCaseSensitive, data, route, start, node, depth, on
           const actuallyCaseSensitive = caseSensitive && !!(prefix_raw || suffix_raw);
           const prefix = !prefix_raw ? void 0 : actuallyCaseSensitive ? prefix_raw : prefix_raw.toLowerCase();
           const suffix = !suffix_raw ? void 0 : actuallyCaseSensitive ? suffix_raw : suffix_raw.toLowerCase();
-          const existingNode = !skipOnParamError && node.dynamic?.find((s) => !s.skipOnParamError && s.caseSensitive === actuallyCaseSensitive && s.prefix === prefix && s.suffix === suffix);
+          const existingNode = !parseParams && node.dynamic?.find((s) => !s.parse && s.caseSensitive === actuallyCaseSensitive && s.prefix === prefix && s.suffix === suffix);
           if (existingNode) nextNode = existingNode;
           else {
             const next = createDynamicNode(1, route.fullPath ?? route.from, actuallyCaseSensitive, prefix, suffix);
@@ -1611,7 +1616,7 @@ function parseSegments(defaultCaseSensitive, data, route, start, node, depth, on
           const actuallyCaseSensitive = caseSensitive && !!(prefix_raw || suffix_raw);
           const prefix = !prefix_raw ? void 0 : actuallyCaseSensitive ? prefix_raw : prefix_raw.toLowerCase();
           const suffix = !suffix_raw ? void 0 : actuallyCaseSensitive ? suffix_raw : suffix_raw.toLowerCase();
-          const existingNode = !skipOnParamError && node.optional?.find((s) => !s.skipOnParamError && s.caseSensitive === actuallyCaseSensitive && s.prefix === prefix && s.suffix === suffix);
+          const existingNode = !parseParams && node.optional?.find((s) => !s.parse && s.caseSensitive === actuallyCaseSensitive && s.prefix === prefix && s.suffix === suffix);
           if (existingNode) nextNode = existingNode;
           else {
             const next = createDynamicNode(3, route.fullPath ?? route.from, actuallyCaseSensitive, prefix, suffix);
@@ -1639,7 +1644,7 @@ function parseSegments(defaultCaseSensitive, data, route, start, node, depth, on
       }
       node = nextNode;
     }
-    if (skipOnParamError && route.children && !route.isRoot && route.id && route.id.charCodeAt(route.id.lastIndexOf("/") + 1) === 95) {
+    if (parseParams && route.children && !route.isRoot && route.id && route.id.charCodeAt(route.id.lastIndexOf("/") + 1) === 95) {
       const pathlessNode = createStaticNode(route.fullPath ?? route.from);
       pathlessNode.kind = SEGMENT_TYPE_PATHLESS;
       pathlessNode.parent = node;
@@ -1659,9 +1664,7 @@ function parseSegments(defaultCaseSensitive, data, route, start, node, depth, on
       node.index = indexNode;
       node = indexNode;
     }
-    node.parse = route.options?.params?.parse ?? null;
-    node.skipOnParamError = skipOnParamError;
-    node.parsingPriority = route.options?.skipRouteOnParseError?.priority ?? 0;
+    node.parse = parseParams ?? null;
     if (isLeaf && !node.route) {
       node.route = route;
       node.fullPath = route.fullPath ?? route.from;
@@ -1670,9 +1673,8 @@ function parseSegments(defaultCaseSensitive, data, route, start, node, depth, on
   if (route.children) for (const child of route.children) parseSegments(defaultCaseSensitive, data, child, cursor, node, depth, onRoute);
 }
 function sortDynamic(a, b2) {
-  if (a.skipOnParamError && !b2.skipOnParamError) return -1;
-  if (!a.skipOnParamError && b2.skipOnParamError) return 1;
-  if (a.skipOnParamError && b2.skipOnParamError && (a.parsingPriority || b2.parsingPriority)) return b2.parsingPriority - a.parsingPriority;
+  if (a.parse && !b2.parse) return -1;
+  if (!a.parse && b2.parse) return 1;
   if (a.prefix && b2.prefix && a.prefix !== b2.prefix) {
     if (a.prefix.startsWith(b2.prefix)) return -1;
     if (b2.prefix.startsWith(a.prefix)) return 1;
@@ -1720,9 +1722,7 @@ function createStaticNode(fullPath) {
     route: null,
     fullPath,
     parent: null,
-    parse: null,
-    skipOnParamError: false,
-    parsingPriority: 0
+    parse: null
   };
 }
 function createDynamicNode(kind, fullPath, caseSensitive, prefix, suffix) {
@@ -1740,8 +1740,6 @@ function createDynamicNode(kind, fullPath, caseSensitive, prefix, suffix) {
     fullPath,
     parent: null,
     parse: null,
-    skipOnParamError: false,
-    parsingPriority: 0,
     caseSensitive,
     prefix,
     suffix
@@ -1832,8 +1830,7 @@ function findMatch(path, segmentTree, fuzzy = false) {
   const [rawParams] = extractParams(path, parts, leaf);
   return {
     route: leaf.node.route,
-    rawParams,
-    parsedParams: leaf.parsedParams
+    rawParams
   };
 }
 function extractParams(path, parts, leaf) {
@@ -1929,27 +1926,26 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
     index: 1,
     skipped: 0,
     depth: 1,
-    statics: 1,
+    statics: 0,
     dynamics: 0,
     optionals: 0
   }];
-  let wildcardMatch = null;
   let bestFuzzy = null;
   let bestMatch = null;
   while (stack.length) {
     const frame = stack.pop();
     const { node, index, skipped, depth, statics, dynamics, optionals } = frame;
-    let { extract, rawParams, parsedParams } = frame;
-    if (node.skipOnParamError) {
-      if (!validateMatchParams(path, parts, frame)) continue;
+    let { extract, rawParams } = frame;
+    if (node.kind === 2 && node.route && !isFrameMoreSpecific(bestMatch, frame)) continue;
+    if (node.parse) {
+      if (!validateParseParams(path, parts, frame)) continue;
       rawParams = frame.rawParams;
       extract = frame.extract;
-      parsedParams = frame.parsedParams;
     }
     if (fuzzy && node.route && node.kind !== SEGMENT_TYPE_INDEX && isFrameMoreSpecific(bestFuzzy, frame)) bestFuzzy = frame;
     const isBeyondPath = index === partsLength;
     if (isBeyondPath) {
-      if (node.route && !pathIsIndex && isFrameMoreSpecific(bestMatch, frame)) bestMatch = frame;
+      if (node.route && (!pathIsIndex || node.kind === SEGMENT_TYPE_INDEX || node.kind === 2) && isFrameMoreSpecific(bestMatch, frame)) bestMatch = frame;
       if (!node.optional && !node.wildcard && !node.index && !node.pathless) continue;
     }
     const part = isBeyondPath ? void 0 : parts[index];
@@ -1964,19 +1960,19 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
         dynamics,
         optionals,
         extract,
-        rawParams,
-        parsedParams
+        rawParams
       };
       let indexValid = true;
-      if (node.index.skipOnParamError) {
-        if (!validateMatchParams(path, parts, indexFrame)) indexValid = false;
+      if (node.index.parse) {
+        if (!validateParseParams(path, parts, indexFrame)) indexValid = false;
       }
       if (indexValid) {
-        if (statics === partsLength && !dynamics && !optionals && !skipped) return indexFrame;
+        if (!dynamics && !optionals && !skipped && isPerfectStaticMatch(statics, partsLength)) return indexFrame;
         if (isFrameMoreSpecific(bestMatch, indexFrame)) bestMatch = indexFrame;
       }
     }
-    if (node.wildcard && isFrameMoreSpecific(wildcardMatch, frame)) for (const segment of node.wildcard) {
+    if (node.wildcard) for (let i = node.wildcard.length - 1; i >= 0; i--) {
+      const segment = node.wildcard[i];
       const { prefix, suffix } = segment;
       if (prefix) {
         if (isBeyondPath) continue;
@@ -1987,23 +1983,17 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
         const end = parts.slice(index).join("/").slice(-suffix.length);
         if ((segment.caseSensitive ? end : end.toLowerCase()) !== suffix) continue;
       }
-      const frame2 = {
+      stack.push({
         node: segment,
         index: partsLength,
         skipped,
-        depth,
+        depth: depth + 1,
         statics,
         dynamics,
         optionals,
         extract,
-        rawParams,
-        parsedParams
-      };
-      if (segment.skipOnParamError) {
-        if (!validateMatchParams(path, parts, frame2)) continue;
-      }
-      wildcardMatch = frame2;
-      break;
+        rawParams
+      });
     }
     if (node.optional) {
       const nextSkipped = skipped | 1 << depth;
@@ -2019,8 +2009,7 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
           dynamics,
           optionals,
           extract,
-          rawParams,
-          parsedParams
+          rawParams
         });
       }
       if (!isBeyondPath) for (let i = node.optional.length - 1; i >= 0; i--) {
@@ -2038,10 +2027,9 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
           depth: nextDepth,
           statics,
           dynamics,
-          optionals: optionals + 1,
+          optionals: optionals + segmentScore(partsLength, index),
           extract,
-          rawParams,
-          parsedParams
+          rawParams
         });
       }
     }
@@ -2059,11 +2047,10 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
         skipped,
         depth: depth + 1,
         statics,
-        dynamics: dynamics + 1,
+        dynamics: dynamics + segmentScore(partsLength, index),
         optionals,
         extract,
-        rawParams,
-        parsedParams
+        rawParams
       });
     }
     if (!isBeyondPath && node.staticInsensitive) {
@@ -2073,12 +2060,11 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
         index: index + 1,
         skipped,
         depth: depth + 1,
-        statics: statics + 1,
+        statics: statics + segmentScore(partsLength, index),
         dynamics,
         optionals,
         extract,
-        rawParams,
-        parsedParams
+        rawParams
       });
     }
     if (!isBeyondPath && node.static) {
@@ -2088,12 +2074,11 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
         index: index + 1,
         skipped,
         depth: depth + 1,
-        statics: statics + 1,
+        statics: statics + segmentScore(partsLength, index),
         dynamics,
         optionals,
         extract,
-        rawParams,
-        parsedParams
+        rawParams
       });
     }
     if (node.pathless) {
@@ -2109,15 +2094,12 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
           dynamics,
           optionals,
           extract,
-          rawParams,
-          parsedParams
+          rawParams
         });
       }
     }
   }
-  if (bestMatch && wildcardMatch) return isFrameMoreSpecific(wildcardMatch, bestMatch) ? bestMatch : wildcardMatch;
   if (bestMatch) return bestMatch;
-  if (wildcardMatch) return wildcardMatch;
   if (fuzzy && bestFuzzy) {
     let sliceIndex = bestFuzzy.index;
     for (let i = 0; i < bestFuzzy.index; i++) sliceIndex += parts[i].length;
@@ -2128,17 +2110,28 @@ function getNodeMatch(path, parts, segmentTree, fuzzy) {
   }
   return null;
 }
-function validateMatchParams(path, parts, frame) {
+function segmentScore(partsLength, index) {
+  return 2 ** (partsLength - index - 1);
+}
+function isPerfectStaticMatch(statics, partsLength) {
+  return statics === 2 ** (partsLength - 1) - 1;
+}
+function validateParseParams(path, parts, frame) {
+  let rawParams;
+  let state;
   try {
-    const [rawParams, state] = extractParams(path, parts, frame);
-    frame.rawParams = rawParams;
-    frame.extract = state;
-    const parsed = frame.node.parse(rawParams);
-    frame.parsedParams = Object.assign(/* @__PURE__ */ Object.create(null), frame.parsedParams, parsed);
-    return true;
+    [rawParams, state] = extractParams(path, parts, frame);
   } catch {
     return null;
   }
+  frame.rawParams = rawParams;
+  frame.extract = state;
+  if (!frame.node.parse) return true;
+  try {
+    if (frame.node.parse(rawParams) === false) return null;
+  } catch {
+  }
+  return true;
 }
 function isFrameMoreSpecific(prev, next) {
   if (!prev) return true;
@@ -2200,28 +2193,7 @@ function resolvePath({ base, to: to2, trailingSlash = "never", cache }) {
       if (trailingSlash === "never") baseSegments.pop();
     } else if (trailingSlash === "always") baseSegments.push("");
   }
-  let segment;
-  let joined = "";
-  for (let i = 0; i < baseSegments.length; i++) {
-    if (i > 0) joined += "/";
-    const part = baseSegments[i];
-    if (!part) continue;
-    segment = parseSegment(part, 0, segment);
-    const kind = segment[0];
-    if (kind === 0) {
-      joined += part;
-      continue;
-    }
-    const end = segment[5];
-    const prefix = part.substring(0, segment[1]);
-    const suffix = part.substring(segment[4], end);
-    const value = part.substring(segment[2], segment[3]);
-    if (kind === 1) joined += prefix || suffix ? `${prefix}{$${value}}${suffix}` : `$${value}`;
-    else if (kind === 2) joined += prefix || suffix ? `${prefix}{$}${suffix}` : "$";
-    else joined += `${prefix}{-$${value}}${suffix}`;
-  }
-  joined = cleanPath(joined);
-  const result = joined || "/";
+  const result = cleanPath(baseSegments.join("/")) || "/";
   if (key && cache) cache.set(key, result);
   return result;
 }
@@ -2357,9 +2329,9 @@ function encodePathParam(value, decoder) {
   return decoder?.(encoded) ?? encoded;
 }
 function isNotFound(obj) {
-  return !!obj?.isNotFound;
+  return obj?.isNotFound === true;
 }
-var rootRouteId = "__root__";
+const rootRouteId = "__root__";
 function redirect(opts) {
   opts.statusCode = opts.statusCode || opts.code || 307;
   if (!opts._builtLocation && !opts.reloadDocument && typeof opts.href === "string") try {
@@ -2649,8 +2621,35 @@ function resolveManifestAssetLink(link) {
   };
   return link;
 }
-var GLOBAL_TSR = "$_TSR";
-var TSR_SCRIPT_BARRIER_ID = "$tsr-stream-barrier";
+function getStylesheetHref(asset) {
+  if (asset.tag !== "link") return void 0;
+  const rel = asset.attrs?.rel;
+  const href = asset.attrs?.href;
+  if (typeof href !== "string") return void 0;
+  if (!(typeof rel === "string" ? rel.split(/\s+/) : []).includes("stylesheet")) return void 0;
+  return href;
+}
+function isInlinableStylesheet(manifest2, asset) {
+  const href = getStylesheetHref(asset);
+  return !!href && manifest2?.inlineCss?.styles[href] !== void 0;
+}
+function createInlineCssStyleAsset(css) {
+  return {
+    tag: "style",
+    attrs: { suppressHydrationWarning: true },
+    inlineCss: true,
+    children: css
+  };
+}
+function createInlineCssPlaceholderAsset() {
+  return {
+    tag: "style",
+    attrs: { suppressHydrationWarning: true },
+    inlineCss: true
+  };
+}
+const GLOBAL_TSR = "$_TSR";
+const TSR_SCRIPT_BARRIER_ID = "$tsr-stream-barrier";
 var L = ((i) => (i[i.AggregateError = 1] = "AggregateError", i[i.ArrowFunction = 2] = "ArrowFunction", i[i.ErrorPrototypeStack = 4] = "ErrorPrototypeStack", i[i.ObjectAssign = 8] = "ObjectAssign", i[i.BigIntTypedArray = 16] = "BigIntTypedArray", i[i.RegExp = 32] = "RegExp", i))(L || {});
 var v = Symbol.asyncIterator, mr = Symbol.hasInstance, R = Symbol.isConcatSpreadable, C = Symbol.iterator, pr = Symbol.match, dr = Symbol.matchAll, gr = Symbol.replace, yr = Symbol.search, Nr = Symbol.species, br = Symbol.split, vr = Symbol.toPrimitive, P$1 = Symbol.toStringTag, Cr = Symbol.unscopables;
 var rt = { 0: "Symbol.asyncIterator", 1: "Symbol.hasInstance", 2: "Symbol.isConcatSpreadable", 3: "Symbol.iterator", 4: "Symbol.match", 5: "Symbol.matchAll", 6: "Symbol.replace", 7: "Symbol.search", 8: "Symbol.species", 9: "Symbol.split", 10: "Symbol.toPrimitive", 11: "Symbol.toStringTag", 12: "Symbol.unscopables" }, ve = { [v]: 0, [mr]: 1, [R]: 2, [C]: 3, [pr]: 4, [dr]: 5, [gr]: 6, [yr]: 7, [Nr]: 8, [br]: 9, [vr]: 10, [P$1]: 11, [Cr]: 12 }, tt = { 0: v, 1: mr, 2: R, 3: C, 4: pr, 5: dr, 6: gr, 7: yr, 8: Nr, 9: br, 10: vr, 11: P$1, 12: Cr }, nt = { 2: "!0", 3: "!1", 1: "void 0", 0: "null", 4: "-0", 5: "1/0", 6: "-1/0", 7: "0/0" }, o = void 0, ot = { 2: true, 3: false, 1: o, 0: null, 4: -0, 5: Number.POSITIVE_INFINITY, 6: Number.NEGATIVE_INFINITY, 7: Number.NaN };
@@ -2658,10 +2657,10 @@ var Ce = { 0: "Error", 1: "EvalError", 2: "RangeError", 3: "ReferenceError", 4: 
 function c(e, r, t, n2, a, s, i, u, l, g, S, d) {
   return { t: e, i: r, s: t, c: n2, m: a, p: s, e: i, a: u, f: l, b: g, o: S, l: d };
 }
-function F(e) {
+function B(e) {
   return c(2, o, e, o, o, o, o, o, o, o, o, o);
 }
-var J = F(2), Z = F(3), Ae = F(1), Ee = F(0), st = F(4), it = F(5), ut = F(6), lt = F(7);
+var J = B(2), Z = B(3), Ae = B(1), Ee = B(0), st = B(4), it = B(5), ut = B(6), lt = B(7);
 function fn(e) {
   switch (e) {
     case '"':
@@ -2721,7 +2720,7 @@ function Sn(e) {
       return e;
   }
 }
-function B(e) {
+function D(e) {
   return e.replace(/(\\\\|\\"|\\n|\\r|\\b|\\t|\\f|\\u2028|\\u2029|\\x3C)/g, Sn);
 }
 var U = "__SEROVAL_REFS__", ce = "$R", Ie = `self.${ce}`;
@@ -3368,7 +3367,7 @@ function Fr(e, r, t) {
   throw new h(e);
 }
 function Gn(e, r) {
-  return b(e, r.i, ft(B(r.s)));
+  return b(e, r.i, ft(D(r.s)));
 }
 function Kn(e, r, t) {
   let n2 = t.a, a = n2.length, s = b(e, t.i, new Array(a));
@@ -3404,7 +3403,7 @@ function Ft(e, r, t) {
   Hn(r) ? e[r] = t : Object.defineProperty(e, r, { value: t, configurable: true, enumerable: true, writable: true });
 }
 function Zn(e, r, t, n2, a) {
-  if (typeof n2 == "string") Ft(t, n2, p$1(e, r, a));
+  if (typeof n2 == "string") Ft(t, D(n2), p$1(e, r, a));
   else {
     let s = p$1(e, r, n2);
     switch (typeof s) {
@@ -3433,7 +3432,7 @@ function Xn(e, r) {
 }
 function Qn(e, r) {
   if (e.base.features & 32) {
-    let t = B(r.c);
+    let t = D(r.c);
     if (t.length > jn) throw new h(r);
     return b(e, r.i, new RegExp(t, r.m));
   }
@@ -3451,7 +3450,7 @@ function ro(e, r, t) {
 }
 function to(e, r) {
   if (r.s.length > Ln) throw new h(r);
-  return b(e, r.i, Or(B(r.s)));
+  return b(e, r.i, Or(D(r.s)));
 }
 function no(e, r, t) {
   var u;
@@ -3473,11 +3472,11 @@ function Yt(e, r, t, n2) {
   return n2;
 }
 function ao(e, r, t) {
-  let n2 = b(e, t.i, new AggregateError([], B(t.m)));
+  let n2 = b(e, t.i, new AggregateError([], D(t.m)));
   return Yt(e, r, t, n2);
 }
 function so(e, r, t) {
-  let n2 = Fr(t, at, t.s), a = b(e, t.i, new n2(B(t.m)));
+  let n2 = Fr(t, at, t.s), a = b(e, t.i, new n2(D(t.m)));
   return Yt(e, r, t, a);
 }
 function io(e, r, t) {
@@ -3490,7 +3489,7 @@ function uo(e, r, t) {
 function lo(e, r, t) {
   let n2 = e.base.plugins;
   if (n2) {
-    let a = B(t.c);
+    let a = D(t.c);
     for (let s = 0, i = n2.length; s < i; s++) {
       let u = n2[s];
       if (u.tag === a) return b(e, t.i, u.deserialize(t.s, new Dr(e, r), { id: t.i }));
@@ -3560,7 +3559,7 @@ function p$1(e, r, t) {
     case 0:
       return Number(t.s);
     case 1:
-      return B(String(t.s));
+      return D(String(t.s));
     case 3:
       if (String(t.s).length > Un) throw new h(t);
       return BigInt(t.s);
@@ -3747,7 +3746,7 @@ function Ur(e, r, t, n2) {
 function Vo(e, r, t, n2) {
   Yr(e.base, m(e, r) + ".v[" + t + "]", n2);
 }
-function D(e, r) {
+function F(e, r) {
   return r.t === 4 && e.stack.includes(r.i);
 }
 function se(e, r, t) {
@@ -3757,7 +3756,7 @@ function Mo(e) {
   return U + '.get("' + e.s + '")';
 }
 function $t(e, r, t, n2) {
-  return t ? D(e.base, t) ? (O(e.base, r), Ne(e, r, n2, m(e, t.i)), "") : f(e, t) : "";
+  return t ? F(e.base, t) ? (O(e.base, r), Ne(e, r, n2, m(e, t.i)), "") : f(e, t) : "";
 }
 function Lo(e, r) {
   let t = r.i, n2 = r.a, a = n2.length;
@@ -3772,7 +3771,7 @@ function Lo(e, r) {
 function Xt(e, r, t, n2) {
   if (typeof t == "string") {
     let a = Number(t), s = a >= 0 && a.toString() === t || Vr(t);
-    if (D(e.base, n2)) {
+    if (F(e.base, n2)) {
       let i = m(e, n2.i);
       return O(e.base, r.i), s && a !== a ? Ur(e, r.i, t, i) : Ne(e, r.i, s ? t : '"' + t + '"', i), "";
     }
@@ -3800,7 +3799,7 @@ function jo(e, r, t, n2) {
 }
 function Yo(e, r, t, n2, a) {
   let s = e.base, i = f(e, a), u = Number(n2), l = u >= 0 && u.toString() === n2 || Vr(n2);
-  if (D(s, a)) l && u !== u ? Ur(e, r.i, n2, i) : Ne(e, r.i, l ? n2 : '"' + n2 + '"', i);
+  if (F(s, a)) l && u !== u ? Ur(e, r.i, n2, i) : Ne(e, r.i, l ? n2 : '"' + n2 + '"', i);
   else {
     let g = s.assignments;
     s.assignments = t, l && u !== u ? Ur(e, r.i, n2, i) : Ne(e, r.i, l ? n2 : '"' + n2 + '"', i), s.assignments = g;
@@ -3851,7 +3850,7 @@ function Ho(e, r) {
 }
 function Qt(e, r, t) {
   let n2 = e.base;
-  return D(n2, t) ? (O(n2, r), Bo(e, r, m(e, t.i)), "") : f(e, t);
+  return F(n2, t) ? (O(n2, r), Bo(e, r, m(e, t.i)), "") : f(e, t);
 }
 function Jo(e, r) {
   let t = Oo, n2 = r.a, a = n2.length, s = r.i;
@@ -3865,9 +3864,9 @@ function Jo(e, r) {
 }
 function en(e, r, t, n2, a) {
   let s = e.base;
-  if (D(s, t)) {
+  if (F(s, t)) {
     let i = m(e, t.i);
-    if (O(s, r), D(s, n2)) {
+    if (O(s, r), F(s, n2)) {
       let l = m(e, n2.i);
       return ge(e, r, i, l), "";
     }
@@ -3878,7 +3877,7 @@ function en(e, r, t, n2, a) {
     let u = s.stack;
     return s.stack = [], ge(e, r, i, f(e, n2)), s.stack = u, "";
   }
-  if (D(s, n2)) {
+  if (F(s, n2)) {
     let i = m(e, n2.i);
     if (O(s, r), t.t !== 4 && t.i != null && Lr(s, t.i)) {
       let l = "(" + f(e, t) + ",[" + a + "," + a + "])";
@@ -3920,7 +3919,7 @@ function ra(e, r) {
 }
 function ta(e, r) {
   let t, n2 = r.f, a = r.i, s = r.s ? wo : ho, i = e.base;
-  if (D(i, n2)) {
+  if (F(i, n2)) {
     let u = m(e, n2.i);
     t = s + (r.s ? "().then(" + sr([], u) + ")" : "().catch(" + Wt([], "throw " + u) + ")");
   } else {
@@ -3993,7 +3992,7 @@ function da(e, r) {
 }
 function rn(e, r, t, n2) {
   let a = e.base;
-  return D(a, n2) ? (O(a, r), Vo(e, r, t, m(e, n2.i)), "") : f(e, n2);
+  return F(a, n2) ? (O(a, r), Vo(e, r, t, m(e, n2.i)), "") : f(e, n2);
 }
 function ga(e, r) {
   let t = r.a, n2 = t.length, a = r.i;
@@ -4410,38 +4409,40 @@ function Iu(e, r = {}) {
 function createSerializationAdapter(opts) {
   return opts;
 }
+// @__NO_SIDE_EFFECTS__
 function makeSsrSerovalPlugin(serializationAdapter, options) {
-  return ni({
+  return /* @__PURE__ */ ni({
     tag: "$TSR/t/" + serializationAdapter.key,
     test: serializationAdapter.test,
-    parse: { stream(value, ctx) {
-      return ctx.parse(serializationAdapter.toSerializable(value));
+    parse: { stream(value, ctx, _data) {
+      return { v: ctx.parse(serializationAdapter.toSerializable(value)) };
     } },
-    serialize(node, ctx) {
+    serialize(node, ctx, _data) {
       options.didRun = true;
-      return GLOBAL_TSR + '.t.get("' + serializationAdapter.key + '")(' + ctx.serialize(node) + ")";
+      return GLOBAL_TSR + '.t.get("' + serializationAdapter.key + '")(' + ctx.serialize(node.v) + ")";
     },
     deserialize: void 0
   });
 }
+// @__NO_SIDE_EFFECTS__
 function makeSerovalPlugin(serializationAdapter) {
-  return ni({
+  return /* @__PURE__ */ ni({
     tag: "$TSR/t/" + serializationAdapter.key,
     test: serializationAdapter.test,
     parse: {
-      sync(value, ctx) {
-        return ctx.parse(serializationAdapter.toSerializable(value));
+      sync(value, ctx, _data) {
+        return { v: ctx.parse(serializationAdapter.toSerializable(value)) };
       },
-      async async(value, ctx) {
-        return await ctx.parse(serializationAdapter.toSerializable(value));
+      async async(value, ctx, _data) {
+        return { v: await ctx.parse(serializationAdapter.toSerializable(value)) };
       },
-      stream(value, ctx) {
-        return ctx.parse(serializationAdapter.toSerializable(value));
+      stream(value, ctx, _data) {
+        return { v: ctx.parse(serializationAdapter.toSerializable(value)) };
       }
     },
     serialize: void 0,
-    deserialize(node, ctx) {
-      return serializationAdapter.fromSerializable(ctx.deserialize(node));
+    deserialize(node, ctx, _data) {
+      return serializationAdapter.fromSerializable(ctx.deserialize(node.v));
     }
   });
 }
@@ -4451,8 +4452,8 @@ var RawStream = class {
     this.hint = options?.hint ?? "binary";
   }
 };
-var BufferCtor = globalThis.Buffer;
-var hasNodeBuffer = !!BufferCtor && typeof BufferCtor.from === "function";
+const BufferCtor = globalThis.Buffer;
+const hasNodeBuffer = !!BufferCtor && typeof BufferCtor.from === "function";
 function uint8ArrayToBase64(bytes) {
   if (bytes.length === 0) return "";
   if (hasNodeBuffer) return BufferCtor.from(bytes).toString("base64");
@@ -4475,9 +4476,9 @@ function base64ToUint8Array(base64) {
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   return bytes;
 }
-var RAW_STREAM_FACTORY_BINARY = /* @__PURE__ */ Object.create(null);
-var RAW_STREAM_FACTORY_TEXT = /* @__PURE__ */ Object.create(null);
-var RAW_STREAM_FACTORY_CONSTRUCTOR_BINARY = (stream) => new ReadableStream({ start(controller) {
+const RAW_STREAM_FACTORY_BINARY = /* @__PURE__ */ Object.create(null);
+const RAW_STREAM_FACTORY_TEXT = /* @__PURE__ */ Object.create(null);
+const RAW_STREAM_FACTORY_CONSTRUCTOR_BINARY = (stream) => new ReadableStream({ start(controller) {
   stream.on({
     next(base64) {
       try {
@@ -4496,8 +4497,8 @@ var RAW_STREAM_FACTORY_CONSTRUCTOR_BINARY = (stream) => new ReadableStream({ sta
     }
   });
 } });
-var textEncoderForFactory = new TextEncoder();
-var RAW_STREAM_FACTORY_CONSTRUCTOR_TEXT = (stream) => {
+const textEncoderForFactory = new TextEncoder();
+const RAW_STREAM_FACTORY_CONSTRUCTOR_TEXT = (stream) => {
   return new ReadableStream({ start(controller) {
     stream.on({
       next(value) {
@@ -4519,8 +4520,8 @@ var RAW_STREAM_FACTORY_CONSTRUCTOR_TEXT = (stream) => {
     });
   } });
 };
-var FACTORY_BINARY = `(s=>new ReadableStream({start(c){s.on({next(b){try{const d=atob(b),a=new Uint8Array(d.length);for(let i=0;i<d.length;i++)a[i]=d.charCodeAt(i);c.enqueue(a)}catch(_){}},throw(e){c.error(e)},return(){try{c.close()}catch(_){}}})}}))`;
-var FACTORY_TEXT = `(s=>{const e=new TextEncoder();return new ReadableStream({start(c){s.on({next(v){try{if(typeof v==='string'){c.enqueue(e.encode(v))}else{const d=atob(v.$b64),a=new Uint8Array(d.length);for(let i=0;i<d.length;i++)a[i]=d.charCodeAt(i);c.enqueue(a)}}catch(_){}},throw(x){c.error(x)},return(){try{c.close()}catch(_){}}})}})})`;
+const FACTORY_BINARY = `(s=>new ReadableStream({start(c){s.on({next(b){try{const d=atob(b),a=new Uint8Array(d.length);for(let i=0;i<d.length;i++)a[i]=d.charCodeAt(i);c.enqueue(a)}catch(_){}},throw(e){c.error(e)},return(){try{c.close()}catch(_){}}})}}))`;
+const FACTORY_TEXT = `(s=>{const e=new TextEncoder();return new ReadableStream({start(c){s.on({next(v){try{if(typeof v==='string'){c.enqueue(e.encode(v))}else{const d=atob(v.$b64),a=new Uint8Array(d.length);for(let i=0;i<d.length;i++)a[i]=d.charCodeAt(i);c.enqueue(a)}}catch(_){}},throw(x){c.error(x)},return(){try{c.close()}catch(_){}}})}})})`;
 function toBinaryStream(readable) {
   const stream = te();
   const reader = readable.getReader();
@@ -4574,46 +4575,50 @@ function toTextStream(readable) {
   })();
   return stream;
 }
-var RawStreamSSRPlugin = ni({
+const RawStreamSSRPlugin = /* @__PURE__ */ ni({
   tag: "tss/RawStream",
-  extends: [ni({
+  extends: [/* @__PURE__ */ ni({
     tag: "tss/RawStreamFactory",
     test(value) {
       return value === RAW_STREAM_FACTORY_BINARY;
     },
     parse: {
-      sync() {
+      sync(_value, _ctx, _data) {
+        return {};
       },
-      async() {
-        return Promise.resolve(void 0);
+      async async(_value, _ctx, _data) {
+        return {};
       },
-      stream() {
+      stream(_value, _ctx, _data) {
+        return {};
       }
     },
-    serialize() {
+    serialize(_node, _ctx, _data) {
       return FACTORY_BINARY;
     },
-    deserialize() {
+    deserialize(_node, _ctx, _data) {
       return RAW_STREAM_FACTORY_BINARY;
     }
-  }), ni({
+  }), /* @__PURE__ */ ni({
     tag: "tss/RawStreamFactoryText",
     test(value) {
       return value === RAW_STREAM_FACTORY_TEXT;
     },
     parse: {
-      sync() {
+      sync(_value, _ctx, _data) {
+        return {};
       },
-      async() {
-        return Promise.resolve(void 0);
+      async async(_value, _ctx, _data) {
+        return {};
       },
-      stream() {
+      stream(_value, _ctx, _data) {
+        return {};
       }
     },
-    serialize() {
+    serialize(_node, _ctx, _data) {
       return FACTORY_TEXT;
     },
-    deserialize() {
+    deserialize(_node, _ctx, _data) {
       return RAW_STREAM_FACTORY_TEXT;
     }
   })],
@@ -4621,58 +4626,59 @@ var RawStreamSSRPlugin = ni({
     return value instanceof RawStream;
   },
   parse: {
-    sync(value, ctx) {
+    sync(value, ctx, _data) {
       const factory = value.hint === "text" ? RAW_STREAM_FACTORY_TEXT : RAW_STREAM_FACTORY_BINARY;
       return {
-        hint: value.hint,
+        hint: ctx.parse(value.hint),
         factory: ctx.parse(factory),
         stream: ctx.parse(te())
       };
     },
-    async async(value, ctx) {
+    async async(value, ctx, _data) {
       const factory = value.hint === "text" ? RAW_STREAM_FACTORY_TEXT : RAW_STREAM_FACTORY_BINARY;
       const encodedStream = value.hint === "text" ? toTextStream(value.stream) : toBinaryStream(value.stream);
       return {
-        hint: value.hint,
+        hint: await ctx.parse(value.hint),
         factory: await ctx.parse(factory),
         stream: await ctx.parse(encodedStream)
       };
     },
-    stream(value, ctx) {
+    stream(value, ctx, _data) {
       const factory = value.hint === "text" ? RAW_STREAM_FACTORY_TEXT : RAW_STREAM_FACTORY_BINARY;
       const encodedStream = value.hint === "text" ? toTextStream(value.stream) : toBinaryStream(value.stream);
       return {
-        hint: value.hint,
+        hint: ctx.parse(value.hint),
         factory: ctx.parse(factory),
         stream: ctx.parse(encodedStream)
       };
     }
   },
-  serialize(node, ctx) {
+  serialize(node, ctx, _data) {
     return "(" + ctx.serialize(node.factory) + ")(" + ctx.serialize(node.stream) + ")";
   },
-  deserialize(node, ctx) {
+  deserialize(node, ctx, _data) {
     const stream = ctx.deserialize(node.stream);
-    return node.hint === "text" ? RAW_STREAM_FACTORY_CONSTRUCTOR_TEXT(stream) : RAW_STREAM_FACTORY_CONSTRUCTOR_BINARY(stream);
+    return ctx.deserialize(node.hint) === "text" ? RAW_STREAM_FACTORY_CONSTRUCTOR_TEXT(stream) : RAW_STREAM_FACTORY_CONSTRUCTOR_BINARY(stream);
   }
 });
+// @__NO_SIDE_EFFECTS__
 function createRawStreamRPCPlugin(onRawStream) {
   let nextStreamId = 1;
-  return ni({
+  return /* @__PURE__ */ ni({
     tag: "tss/RawStream",
     test(value) {
       return value instanceof RawStream;
     },
     parse: {
-      async(value) {
+      async async(value, ctx, _data) {
         const streamId = nextStreamId++;
         onRawStream(streamId, value.stream);
-        return Promise.resolve({ streamId });
+        return { streamId: await ctx.parse(streamId) };
       },
-      stream(value) {
+      stream(value, ctx, _data) {
         const streamId = nextStreamId++;
         onRawStream(streamId, value.stream);
-        return { streamId };
+        return { streamId: ctx.parse(streamId) };
       }
     },
     serialize() {
@@ -4683,7 +4689,7 @@ function createRawStreamRPCPlugin(onRawStream) {
     }
   });
 }
-var ShallowErrorPlugin = /* @__PURE__ */ ni({
+const ShallowErrorPlugin = /* @__PURE__ */ ni({
   tag: "$TSR/Error",
   test(value) {
     return value instanceof Error;
@@ -4760,7 +4766,7 @@ var ee2 = ni({ tag: "seroval/plugins/web/ReadableStream", extends: [x2], test(e)
   let a = r.deserialize(e.stream);
   return P(a);
 } }), p = ee2;
-var defaultSerovalPlugins = [
+const defaultSerovalPlugins = [
   ShallowErrorPlugin,
   RawStreamSSRPlugin,
   p
@@ -4824,8 +4830,13 @@ var CatchBoundaryImpl = class extends reactExports.Component {
     super(..._args);
     this.state = { error: null };
   }
-  static getDerivedStateFromProps(props) {
-    return { resetKey: props.getResetKey() };
+  static getDerivedStateFromProps(props, state) {
+    const resetKey = props.getResetKey();
+    if (state.error && state.resetKey !== resetKey) return {
+      resetKey,
+      error: null
+    };
+    return { resetKey };
   }
   static getDerivedStateFromError(error) {
     return { error };
@@ -4833,15 +4844,12 @@ var CatchBoundaryImpl = class extends reactExports.Component {
   reset() {
     this.setState({ error: null });
   }
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.error && prevState.resetKey !== this.state.resetKey) this.reset();
-  }
   componentDidCatch(error, errorInfo) {
     if (this.props.onCatch) this.props.onCatch(error, errorInfo);
   }
   render() {
     return this.props.children({
-      error: this.state.resetKey !== this.props.getResetKey() ? null : this.state.error,
+      error: this.state.error,
       reset: () => {
         this.reset();
       }
@@ -5056,7 +5064,7 @@ function requireReactDom_production() {
   reactDom_production.useFormStatus = function() {
     return ReactSharedInternals.H.useHostTransitionStatus();
   };
-  reactDom_production.version = "19.2.4";
+  reactDom_production.version = "19.2.5";
   return reactDom_production;
 }
 var hasRequiredReactDom;
@@ -5082,7 +5090,7 @@ function requireReactDom() {
 function CatchNotFound(props) {
   const router = useRouter();
   {
-    const resetKey = `not-found-${router.stores.location.state.pathname}-${router.stores.status.state}`;
+    const resetKey = `not-found-${router.stores.location.get().pathname}-${router.stores.status.get()}`;
     return /* @__PURE__ */ jsxRuntimeExports.jsx(CatchBoundary, {
       getResetKey: () => resetKey,
       onCatch: (error, errorInfo) => {
@@ -5120,7 +5128,7 @@ function ScrollRestoration() {
 var Match = reactExports.memo(function MatchImpl({ matchId }) {
   const router = useRouter();
   {
-    const match2 = router.stores.activeMatchStoresById.get(matchId)?.state;
+    const match2 = router.stores.matchStores.get(matchId)?.get();
     if (!match2) {
       invariant();
     }
@@ -5129,7 +5137,7 @@ var Match = reactExports.memo(function MatchImpl({ matchId }) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(MatchView, {
       router,
       matchId,
-      resetKey: router.stores.loadedAt.state,
+      resetKey: router.stores.loadedAt.get(),
       matchState: {
         routeId,
         ssr: match2.ssr,
@@ -5185,8 +5193,11 @@ function OnRendered({ resetKey }) {
 }
 var MatchInner = reactExports.memo(function MatchInnerImpl({ matchId }) {
   const router = useRouter();
+  const getMatchPromise = (match2, key2) => {
+    return router.getMatch(match2.id)?._nonReactive[key2] ?? match2._nonReactive[key2];
+  };
   {
-    const match2 = router.stores.activeMatchStoresById.get(matchId)?.state;
+    const match2 = router.stores.matchStores.get(matchId)?.get();
     if (!match2) {
       invariant();
     }
@@ -5201,9 +5212,9 @@ var MatchInner = reactExports.memo(function MatchInnerImpl({ matchId }) {
     const key2 = remountDeps ? JSON.stringify(remountDeps) : void 0;
     const Comp = route2.options.component ?? router.options.defaultComponent;
     const out2 = Comp ? /* @__PURE__ */ jsxRuntimeExports.jsx(Comp, {}, key2) : /* @__PURE__ */ jsxRuntimeExports.jsx(Outlet, {});
-    if (match2._displayPending) throw router.getMatch(match2.id)?._nonReactive.displayPendingPromise;
-    if (match2._forcePending) throw router.getMatch(match2.id)?._nonReactive.minPendingPromise;
-    if (match2.status === "pending") throw router.getMatch(match2.id)?._nonReactive.loadPromise;
+    if (match2._displayPending) throw getMatchPromise(match2, "displayPendingPromise");
+    if (match2._forcePending) throw getMatchPromise(match2, "minPendingPromise");
+    if (match2.status === "pending") throw getMatchPromise(match2, "loadPromise");
     if (match2.status === "notFound") {
       if (!isNotFound(match2.error)) {
         invariant();
@@ -5214,7 +5225,7 @@ var MatchInner = reactExports.memo(function MatchInnerImpl({ matchId }) {
       if (!isRedirect(match2.error)) {
         invariant();
       }
-      throw router.getMatch(match2.id)?._nonReactive.loadPromise;
+      throw getMatchPromise(match2, "loadPromise");
     }
     if (match2.status === "error") return /* @__PURE__ */ jsxRuntimeExports.jsx((route2.options.errorComponent ?? router.options.defaultErrorComponent) || ErrorComponent, {
       error: match2.error,
@@ -5231,7 +5242,7 @@ var Outlet = reactExports.memo(function OutletImpl() {
   let parentGlobalNotFound = false;
   let childMatchId;
   {
-    const matches = router.stores.activeMatchesSnapshot.state;
+    const matches = router.stores.matches.get();
     const parentIndex = matchId ? matches.findIndex((match) => match.id === matchId) : -1;
     const parentMatch = parentIndex >= 0 ? matches[parentIndex] : void 0;
     routeId = parentMatch?.routeId;
@@ -5266,8 +5277,8 @@ function Matches() {
 }
 function MatchesInner() {
   const router = useRouter();
-  const matchId = router.stores.firstMatchId.state;
-  const resetKey = router.stores.loadedAt.state;
+  const matchId = router.stores.firstId.get();
+  const resetKey = router.stores.loadedAt.get();
   const matchComponent = matchId ? /* @__PURE__ */ jsxRuntimeExports.jsx(Match, { matchId }) : null;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(matchContext.Provider, {
     value: matchId,
@@ -5280,7 +5291,7 @@ function MatchesInner() {
   });
 }
 function RouterContextProvider({ router, children, ...rest }) {
-  if (Object.keys(rest).length > 0) router.update({
+  if (hasKeys(rest)) router.update({
     ...router.options,
     ...rest,
     context: {
@@ -10548,9 +10559,9 @@ performance.now();setTimeout(w,2300>q&&2E3<q?2300-q:500)})])},types:[]});z.ready
   }
   function ensureCorrectIsomorphicReactVersion() {
     var isomorphicReactPackageVersion = React2.version;
-    if ("19.2.4" !== isomorphicReactPackageVersion)
+    if ("19.2.5" !== isomorphicReactPackageVersion)
       throw Error(
-        'Incompatible React versions: The "react" and "react-dom" packages must have the exact same version. Instead got:\n  - react:      ' + (isomorphicReactPackageVersion + "\n  - react-dom:  19.2.4\nLearn more: https://react.dev/warnings/version-mismatch")
+        'Incompatible React versions: The "react" and "react-dom" packages must have the exact same version. Instead got:\n  - react:      ' + (isomorphicReactPackageVersion + "\n  - react-dom:  19.2.5\nLearn more: https://react.dev/warnings/version-mismatch")
       );
   }
   ensureCorrectIsomorphicReactVersion();
@@ -10794,7 +10805,7 @@ performance.now();setTimeout(w,2300>q&&2E3<q?2300-q:500)})])},types:[]});z.ready
       startWork(request);
     });
   };
-  reactDomServer_edge_production.version = "19.2.4";
+  reactDomServer_edge_production.version = "19.2.5";
   return reactDomServer_edge_production;
 }
 var reactDomServerLegacy_browser_production = {};
@@ -15590,7 +15601,7 @@ function requireReactDomServerLegacy_browser_production() {
       'The server used "renderToString" which does not support Suspense. If you intended for this Suspense boundary to render the fallback content on the server consider throwing an Error somewhere within the Suspense boundary. If you intended to have the server wait for the suspended component please switch to "renderToReadableStream" which supports Suspense on the server'
     );
   };
-  reactDomServerLegacy_browser_production.version = "19.2.4";
+  reactDomServerLegacy_browser_production.version = "19.2.5";
   return reactDomServerLegacy_browser_production;
 }
 var hasRequiredServer_edge;
@@ -15616,10 +15627,10 @@ function dehydrateSsrMatchId(id) {
   return id.replaceAll("/", "\0");
 }
 var tsrScript_default = "self.$_TSR={h(){this.hydrated=!0,this.c()},e(){this.streamEnded=!0,this.c()},c(){this.hydrated&&this.streamEnded&&(delete self.$_TSR,delete self.$R.tsr)},p(e){this.initialized?e():this.buffer.push(e)},buffer:[]}";
-var SCOPE_ID = "tsr";
-var TSR_PREFIX = GLOBAL_TSR + ".router=";
-var P_PREFIX = GLOBAL_TSR + ".p(()=>";
-var P_SUFFIX = ")";
+const SCOPE_ID = "tsr";
+const TSR_PREFIX = GLOBAL_TSR + ".router=";
+const P_PREFIX = GLOBAL_TSR + ".p(()=>";
+const P_SUFFIX = ")";
 function dehydrateMatch(match) {
   const dehydratedMatch = {
     i: dehydrateSsrMatchId(match.id),
@@ -15635,7 +15646,7 @@ function dehydrateMatch(match) {
   if (match.globalNotFound) dehydratedMatch.g = true;
   return dehydratedMatch;
 }
-var INITIAL_SCRIPTS = [mn(SCOPE_ID), tsrScript_default];
+const INITIAL_SCRIPTS = [mn(SCOPE_ID), tsrScript_default];
 var ScriptBuffer = class {
   constructor(router) {
     this._scriptBarrierLifted = false;
@@ -15699,8 +15710,9 @@ var ScriptBuffer = class {
     this.router = void 0;
   }
 };
-var MANIFEST_CACHE_SIZE = 100;
-var manifestCaches = /* @__PURE__ */ new WeakMap();
+const MANIFEST_CACHE_SIZE = 100;
+const manifestCaches = /* @__PURE__ */ new WeakMap();
+const inlineCssCaches = /* @__PURE__ */ new WeakMap();
 function getManifestCache(manifest2) {
   const cache = manifestCaches.get(manifest2);
   if (cache) return cache;
@@ -15708,8 +15720,85 @@ function getManifestCache(manifest2) {
   manifestCaches.set(manifest2, newCache);
   return newCache;
 }
-function attachRouterServerSsrUtils({ router, manifest: manifest2 }) {
-  router.ssr = { manifest: manifest2 };
+function getInlineCssCache(manifest2) {
+  const cache = inlineCssCaches.get(manifest2);
+  if (cache) return cache;
+  const newCache = createLRUCache(MANIFEST_CACHE_SIZE);
+  inlineCssCaches.set(manifest2, newCache);
+  return newCache;
+}
+function getInlineCssHrefsForMatches(manifest2, matches) {
+  const styles = manifest2?.inlineCss?.styles;
+  if (!styles) return [];
+  const seen = /* @__PURE__ */ new Set();
+  const hrefs = [];
+  for (const match of matches) {
+    const assets = manifest2?.routes[match.routeId]?.assets ?? [];
+    for (const asset of assets) {
+      const href = getStylesheetHref(asset);
+      if (!href || seen.has(href) || styles[href] === void 0) continue;
+      seen.add(href);
+      hrefs.push(href);
+    }
+  }
+  return hrefs;
+}
+function getInlineCssForHrefs(manifest2, hrefs) {
+  const styles = manifest2.inlineCss?.styles;
+  if (!styles || hrefs.length === 0) return void 0;
+  const cacheKey = hrefs.join("\0");
+  {
+    const cached = getInlineCssCache(manifest2).get(cacheKey);
+    if (cached !== void 0) return cached;
+  }
+  const css = hrefs.map((href) => styles[href]).join("");
+  getInlineCssCache(manifest2).set(cacheKey, css);
+  return css;
+}
+function getInlineCssAssetForMatches(manifest2, matches) {
+  if (!manifest2?.inlineCss) return void 0;
+  const css = getInlineCssForHrefs(manifest2, getInlineCssHrefsForMatches(manifest2, matches));
+  return css === void 0 ? void 0 : createInlineCssStyleAsset(css);
+}
+function stripInlinedStylesheetAssets(manifest2, routes, matches) {
+  if (!manifest2.inlineCss) return routes;
+  const nextRoutes = {};
+  for (const [routeId, route] of Object.entries(routes)) {
+    const assets = route.assets?.filter((asset) => !isInlinableStylesheet(manifest2, asset));
+    const nextRoute = { ...route };
+    if (assets) if (assets.length > 0) nextRoute.assets = assets;
+    else delete nextRoute.assets;
+    nextRoutes[routeId] = nextRoute;
+  }
+  if (getInlineCssAssetForMatches(manifest2, matches)) {
+    const rootRoute = nextRoutes["__root__"] ?? {};
+    nextRoutes[rootRouteId] = {
+      ...rootRoute,
+      assets: [createInlineCssPlaceholderAsset(), ...rootRoute.assets ?? []]
+    };
+  }
+  return nextRoutes;
+}
+function attachRouterServerSsrUtils({ router, manifest: manifest2, getRequestAssets, includeUnmatchedRouteAssets = true }) {
+  router.ssr = { get manifest() {
+    const requestAssets = getRequestAssets?.();
+    const inlineCssAsset = getInlineCssAssetForMatches(manifest2, router.stores.matches.get());
+    if (!requestAssets?.length && !inlineCssAsset) return manifest2;
+    return {
+      ...manifest2,
+      routes: {
+        ...manifest2?.routes,
+        [rootRouteId]: {
+          ...manifest2?.routes?.[rootRouteId],
+          assets: [
+            ...requestAssets ?? [],
+            ...inlineCssAsset ? [inlineCssAsset] : [],
+            ...manifest2?.routes?.["__root__"]?.assets ?? []
+          ]
+        }
+      }
+    };
+  } };
   let _dehydrated = false;
   let _serializationFinished = false;
   const renderFinishedListeners = [];
@@ -15727,17 +15816,17 @@ function attachRouterServerSsrUtils({ router, manifest: manifest2 }) {
       const html = `<script${router.options.ssr?.nonce ? ` nonce='${router.options.ssr.nonce}'` : ""}>${script}<\/script>`;
       router.serverSsr.injectHtml(html);
     },
-    dehydrate: async () => {
+    dehydrate: async (opts) => {
       if (_dehydrated) {
         invariant();
       }
-      let matchesToDehydrate = router.stores.activeMatchesSnapshot.state;
+      let matchesToDehydrate = router.stores.matches.get();
       if (router.isShell()) matchesToDehydrate = matchesToDehydrate.slice(0, 1);
       const matches = matchesToDehydrate.map(dehydrateMatch);
       let manifestToDehydrate = void 0;
       if (manifest2) {
         const currentRouteIdsList = matchesToDehydrate.map((m2) => m2.routeId);
-        const manifestCacheKey = currentRouteIdsList.join("\0");
+        const manifestCacheKey = `${currentRouteIdsList.join("\0")}\0includeUnmatchedRouteAssets=${includeUnmatchedRouteAssets}`;
         let filteredRoutes;
         filteredRoutes = getManifestCache(manifest2).get(manifestCacheKey);
         if (!filteredRoutes) {
@@ -15746,12 +15835,19 @@ function attachRouterServerSsrUtils({ router, manifest: manifest2 }) {
           for (const routeId in manifest2.routes) {
             const routeManifest = manifest2.routes[routeId];
             if (currentRouteIds.has(routeId)) nextFilteredRoutes[routeId] = routeManifest;
-            else if (routeManifest.assets && routeManifest.assets.length > 0) nextFilteredRoutes[routeId] = { assets: routeManifest.assets };
+            else if (includeUnmatchedRouteAssets && routeManifest.assets && routeManifest.assets.length > 0) nextFilteredRoutes[routeId] = { assets: routeManifest.assets };
           }
-          getManifestCache(manifest2).set(manifestCacheKey, nextFilteredRoutes);
-          filteredRoutes = nextFilteredRoutes;
+          filteredRoutes = stripInlinedStylesheetAssets(manifest2, nextFilteredRoutes, matchesToDehydrate);
+          getManifestCache(manifest2).set(manifestCacheKey, filteredRoutes);
         }
-        manifestToDehydrate = { routes: filteredRoutes };
+        manifestToDehydrate = { routes: { ...filteredRoutes } };
+        if (opts?.requestAssets?.length) {
+          const existingRoot = manifestToDehydrate.routes[rootRouteId];
+          manifestToDehydrate.routes[rootRouteId] = {
+            ...existingRoot,
+            assets: [...opts.requestAssets, ...existingRoot?.assets ?? []]
+          };
+        }
       }
       const dehydratedRouter = {
         manifest: manifestToDehydrate,
@@ -15764,7 +15860,7 @@ function attachRouterServerSsrUtils({ router, manifest: manifest2 }) {
       _dehydrated = true;
       const trackPlugins = { didRun: false };
       const serializationAdapters = router.options.serializationAdapters;
-      const plugins = serializationAdapters ? serializationAdapters.map((t) => makeSsrSerovalPlugin(t, trackPlugins)).concat(defaultSerovalPlugins) : defaultSerovalPlugins;
+      const plugins = serializationAdapters ? serializationAdapters.map((t) => /* @__PURE__ */ makeSsrSerovalPlugin(t, trackPlugins)).concat(defaultSerovalPlugins) : defaultSerovalPlugins;
       const signalSerializationComplete = () => {
         _serializationFinished = true;
         try {
@@ -15785,14 +15881,15 @@ function attachRouterServerSsrUtils({ router, manifest: manifest2 }) {
           if (trackPlugins.didRun) serialized = P_PREFIX + serialized + P_SUFFIX;
           scriptBuffer.enqueue(serialized);
         },
+        onError: (err) => {
+          console.error("Serialization error:", err);
+          if (err && err.stack) console.error(err.stack);
+          signalSerializationComplete();
+        },
         scopeId: SCOPE_ID,
         onDone: () => {
           scriptBuffer.enqueue(GLOBAL_TSR + ".e()");
           scriptBuffer.flush();
-          signalSerializationComplete();
-        },
-        onError: (err) => {
-          console.error("Serialization error:", err);
           signalSerializationComplete();
         }
       });
@@ -15865,12 +15962,8 @@ function getNormalizedURL(url, base) {
   };
 }
 function splitSetCookieString(cookiesString) {
-  if (Array.isArray(cookiesString)) {
-    return cookiesString.flatMap((c2) => splitSetCookieString(c2));
-  }
-  if (typeof cookiesString !== "string") {
-    return [];
-  }
+  if (Array.isArray(cookiesString)) return cookiesString.flatMap((c2) => splitSetCookieString(c2));
+  if (typeof cookiesString !== "string") return [];
   const cookiesStrings = [];
   let pos = 0;
   let start;
@@ -15879,9 +15972,7 @@ function splitSetCookieString(cookiesString) {
   let nextStart;
   let cookiesSeparatorFound;
   const skipWhitespace = () => {
-    while (pos < cookiesString.length && /\s/.test(cookiesString.charAt(pos))) {
-      pos += 1;
-    }
+    while (pos < cookiesString.length && /\s/.test(cookiesString.charAt(pos))) pos += 1;
     return pos < cookiesString.length;
   };
   const notSpecialChar = () => {
@@ -15898,24 +15989,16 @@ function splitSetCookieString(cookiesString) {
         pos += 1;
         skipWhitespace();
         nextStart = pos;
-        while (pos < cookiesString.length && notSpecialChar()) {
-          pos += 1;
-        }
+        while (pos < cookiesString.length && notSpecialChar()) pos += 1;
         if (pos < cookiesString.length && cookiesString.charAt(pos) === "=") {
           cookiesSeparatorFound = true;
           pos = nextStart;
           cookiesStrings.push(cookiesString.slice(start, lastComma));
           start = pos;
-        } else {
-          pos = lastComma + 1;
-        }
-      } else {
-        pos += 1;
-      }
+        } else pos = lastComma + 1;
+      } else pos += 1;
     }
-    if (!cookiesSeparatorFound || pos >= cookiesString.length) {
-      cookiesStrings.push(cookiesString.slice(start));
-    }
+    if (!cookiesSeparatorFound || pos >= cookiesString.length) cookiesStrings.push(cookiesString.slice(start));
   }
   return cookiesStrings;
 }
@@ -15943,12 +16026,12 @@ function transformReadableStreamWithRouter(router, routerStream) {
 function transformPipeableStreamWithRouter(router, routerStream) {
   return Readable.fromWeb(transformStreamWithRouter(router, Readable.toWeb(routerStream)));
 }
-var BODY_END_TAG = "</body>";
-var HTML_END_TAG = "</html>";
-var MIN_CLOSING_TAG_LENGTH = 4;
-var DEFAULT_SERIALIZATION_TIMEOUT_MS = 6e4;
-var DEFAULT_LIFETIME_TIMEOUT_MS = 6e4;
-var textEncoder$2 = new TextEncoder();
+const BODY_END_TAG = "</body>";
+const HTML_END_TAG = "</html>";
+const MIN_CLOSING_TAG_LENGTH = 4;
+const DEFAULT_SERIALIZATION_TIMEOUT_MS = 6e4;
+const DEFAULT_LIFETIME_TIMEOUT_MS = 6e4;
+const textEncoder$1 = new TextEncoder();
 function findLastClosingTagEnd(str) {
   const len = str.length;
   if (len < MIN_CLOSING_TAG_LENGTH) return -1;
@@ -16070,7 +16153,7 @@ function transformStreamWithRouter(router, appStream, opts) {
   let serializationFinished = serializationAlreadyFinished;
   function safeEnqueue(chunk) {
     if (isStreamClosed) return;
-    if (typeof chunk === "string") controller.enqueue(textEncoder$2.encode(chunk));
+    if (typeof chunk === "string") controller.enqueue(textEncoder$1.encode(chunk));
     else controller.enqueue(chunk);
   }
   function safeClose() {
@@ -16159,7 +16242,10 @@ function transformStreamWithRouter(router, appStream, opts) {
       const html = router.serverSsr?.takeBufferedHtml();
       if (!html) return;
       if (isAppRendering || leftover || pendingClosingTags) appendRouterHtml(html);
-      else safeEnqueue(html);
+      else {
+        flushPendingRouterHtml();
+        safeEnqueue(html);
+      }
     });
     stopListeningToSerializationFinished = router.subscribe("onSerializationFinished", () => {
       serializationFinished = true;
@@ -16245,7 +16331,7 @@ function transformStreamWithRouter(router, appStream, opts) {
   });
   return stream;
 }
-var fullPattern = " daum[ /]| deusu/|(?:^|[^g])news(?!sapphire)|(?<! (?:channel/|google/))google(?!(app|/google| pixel))|(?<! cu)bots?(?:\\b|_)|(?<!(?:lib))http|(?<!cam)scan|24x7|@[a-z][\\w-]+\\.|\\(\\)|\\.com\\b|\\b\\w+\\.ai|\\bmanus-user/|\\bort/|\\bperl\\b|\\bsecurityheaders\\b|\\btime/|\\||^[\\w \\.\\-\\(?:\\):%]+(?:/v?\\d+(?:\\.\\d+)?(?:\\.\\d{1,10})*?)?(?:,|$)|^[^ ]{50,}$|^\\d+\\b|^\\W|^\\w*search\\b|^\\w+/[\\w\\(\\)]*$|^\\w+/\\d\\.\\d\\s\\([\\w@]+\\)$|^active|^ad muncher|^amaya|^apache/|^avsdevicesdk/|^azure|^biglotron|^bot|^bw/|^clamav[ /]|^client/|^cobweb/|^custom|^ddg[_-]android|^discourse|^dispatch/\\d|^downcast/|^duckduckgo|^email|^facebook|^getright/|^gozilla/|^hobbit|^hotzonu|^hwcdn/|^igetter/|^jeode/|^jetty/|^jigsaw|^microsoft bits|^movabletype|^mozilla/\\d\\.\\d\\s[\\w\\.-]+$|^mozilla/\\d\\.\\d\\s\\((?:compatible;)?(?:\\s?[\\w\\d-.]+\\/\\d+\\.\\d+)?\\)$|^navermailapp|^netsurf|^offline|^openai/|^owler|^php|^postman|^python|^rank|^read|^reed|^rest|^rss|^snapchat|^space bison|^svn|^swcd |^taringa|^thumbor/|^track|^w3c|^webbandit/|^webcopier|^wget|^whatsapp|^wordpress|^xenu link sleuth|^yahoo|^yandex|^zdm/\\d|^zoom marketplace/|advisor|agent\\b|analyzer|archive|ask jeeves/teoma|audit|bit\\.ly/|bluecoat drtr|browsex|burpcollaborator|capture|catch|check\\b|checker|chrome-lighthouse|chromeframe|classifier|cloudflare|convertify|crawl|cypress/|dareboost|datanyze|dejaclick|detect|dmbrowser|download|exaleadcloudview|feed|fetcher|firephp|functionize|grab|headless|httrack|hubspot marketing grader|ibisbrowser|infrawatch|insight|inspect|iplabel|java(?!;)|library|linkcheck|mail\\.ru/|manager|measure|monitor\\b|neustar wpm|node\\b|nutch|offbyone|onetrust|optimize|pageburst|pagespeed|parser|phantomjs|pingdom|powermarks|preview|proxy|ptst[ /]\\d|retriever|rexx;|rigor|rss\\b|scrape|server|sogou|sparkler/|speedcurve|spider|splash|statuscake|supercleaner|synapse|synthetic|tools|torrent|transcoder|url|validator|virtuoso|wappalyzer|webglance|webkit2png|whatcms/|xtate/";
+var fullPattern = " daum[ /]| deusu/|(?:^|[^g])news(?!sapphire)|(?<! (?:channel/|google/))google(?!(app|/google| pixel))|(?<! cu)bots?(?:\\b|_)|(?<!(?:lib))http|(?<!cam)scan|24x7|@[a-z][\\w-]+\\.|\\(\\)|\\.com\\b|\\b\\w+\\.ai|\\bcursor/|\\bmanus-user/|\\bort/|\\bperl\\b|\\bplaywright\\b|\\bsecurityheaders\\b|\\bselenium\\b|\\btime/|\\||^[\\w \\.\\-\\(?:\\):%]+(?:/v?\\d+(?:\\.\\d+)?(?:\\.\\d{1,10})*?)?(?:,|$)|^[\\w\\-]+/[\\w]+$|^[^ ]{50,}$|^\\d+\\b|^\\W|^\\w*search\\b|^\\w+/[\\w\\(\\)]*$|^\\w+/\\d\\.\\d\\s\\([\\w@]+\\)$|^active|^ad muncher|^amaya|^apache/|^avsdevicesdk/|^azure|^biglotron|^bot|^bw/|^clamav[ /]|^claude-code/|^client/|^cobweb/|^custom|^ddg[_-]android|^discourse|^dispatch/\\d|^downcast/|^duckduckgo|^email|^facebook|^getright/|^gozilla/|^hobbit|^hotzonu|^hwcdn/|^igetter/|^jeode/|^jetty/|^jigsaw|^microsoft bits|^movabletype|^mozilla/\\d\\.\\d\\s[\\w\\.-]+$|^mozilla/\\d\\.\\d\\s\\((?:compatible;)?(?:\\s?[\\w\\d-.]+\\/\\d+\\.\\d+)?\\)$|^navermailapp|^netsurf|^offline|^openai/|^owler|^php|^postman|^python|^rank|^read|^reed|^rest|^rss|^snapchat|^space bison|^svn|^swcd |^taringa|^thumbor/|^track|^w3c|^webbandit/|^webcopier|^wget|^whatsapp|^wordpress|^xenu link sleuth|^yahoo|^yandex|^zdm/\\d|^zoom marketplace/|advisor|agent\\b|analyzer|archive|ask jeeves/teoma|audit|bit\\.ly/|bluecoat drtr|browsex|burpcollaborator|capture|catch|check\\b|checker|chrome-lighthouse|chromeframe|classifier|cloudflare|convertify|crawl|cypress/|dareboost|datanyze|dejaclick|detect|dmbrowser|download|exaleadcloudview|feed|fetcher|firephp|functionize|grab|headless|httrack|hubspot marketing grader|ibisbrowser|infrawatch|insight|inspect|iplabel|java(?!;)|library|linkcheck|mail\\.ru/|manager|measure|monitor\\b|neustar wpm|node\\b|nutch|offbyone|onetrust|optimize|pageburst|pagespeed|parser|phantomjs|pingdom|powermarks|preview|proxy|ptst[ /]\\d|retriever|rexx;|rigor|rss\\b|scrape|server|sogou|sparkler/|speedcurve|spider|splash|statuscake|supercleaner|synapse|synthetic|tools|torrent|transcoder|url|validator|virtuoso|wappalyzer|webglance|webkit2png|whatcms/|xtate/";
 var naivePattern = /bot|crawl|http|lighthouse|scan|search|spider/i;
 var pattern;
 function getPattern() {
@@ -16259,8 +16345,9 @@ function getPattern() {
   }
   return pattern;
 }
+var isNonEmptyString = (value) => typeof value === "string" && value !== "";
 function isbot(userAgent) {
-  return Boolean(userAgent) && getPattern().test(userAgent);
+  return isNonEmptyString(userAgent) && getPattern().test(userAgent);
 }
 var renderRouterToStream = async ({ request, router, responseHeaders, children }) => {
   if (typeof ReactDOMServer.renderToReadableStream === "function") {
@@ -16272,7 +16359,7 @@ var renderRouterToStream = async ({ request, router, responseHeaders, children }
     if (isbot(request.headers.get("User-Agent"))) await stream.allReady;
     const responseStream = transformReadableStreamWithRouter(router, stream);
     return new Response(responseStream, {
-      status: router.stores.statusCode.state,
+      status: router.stores.statusCode.get(),
       headers: responseHeaders
     });
   }
@@ -16298,7 +16385,7 @@ var renderRouterToStream = async ({ request, router, responseHeaders, children }
     }
     const responseStream = transformPipeableStreamWithRouter(router, reactAppPassthrough);
     return new Response(responseStream, {
-      status: router.stores.statusCode.state,
+      status: router.stores.statusCode.get(),
       headers: responseHeaders
     });
   }
@@ -16317,9 +16404,13 @@ const NullProtoObj = /* @__PURE__ */ (() => {
 })();
 const FastURL = URL;
 const FastResponse = Response;
+function decodePathname(pathname) {
+  return decodeURI(pathname.includes("%25") ? pathname.replace(/%25/g, "%2525") : pathname);
+}
 const kEventNS = "h3.internal.event.";
 const kEventRes = /* @__PURE__ */ Symbol.for(`${kEventNS}res`);
 const kEventResHeaders = /* @__PURE__ */ Symbol.for(`${kEventNS}res.headers`);
+const kEventResErrHeaders = /* @__PURE__ */ Symbol.for(`${kEventNS}res.err.headers`);
 var H3Event = class {
   app;
   req;
@@ -16331,7 +16422,9 @@ var H3Event = class {
     this.req = req;
     this.app = app;
     const _url = req._url;
-    this.url = _url && _url instanceof URL ? _url : new FastURL(req.url);
+    const url = _url && _url instanceof URL ? _url : new FastURL(req.url);
+    if (url.pathname.includes("%")) url.pathname = decodePathname(url.pathname);
+    this.url = url;
   }
   get res() {
     return this[kEventRes] ||= new H3EventResponse();
@@ -16366,6 +16459,9 @@ var H3EventResponse = class {
   statusText;
   get headers() {
     return this[kEventResHeaders] ||= new Headers();
+  }
+  get errHeaders() {
+    return this[kEventResErrHeaders] ||= new Headers();
   }
 };
 const DISALLOWED_STATUS_CHARS = /[^\u0009\u0020-\u007E]/g;
@@ -16406,8 +16502,8 @@ var HTTPError = class HTTPError2 extends Error {
       messageInput = arg1;
       details = arg2;
     } else details = arg1;
-    const status = sanitizeStatusCode(details?.status || details?.cause?.status || details?.status || details?.statusCode, 500);
-    const statusText = sanitizeStatusMessage(details?.statusText || details?.cause?.statusText || details?.statusText || details?.statusMessage);
+    const status = sanitizeStatusCode(details?.status || details?.statusCode || details?.cause?.status || details?.cause?.statusCode, 500);
+    const statusText = sanitizeStatusMessage(details?.statusText || details?.statusMessage || details?.cause?.statusText || details?.cause?.statusMessage);
     const message = messageInput || details?.message || details?.cause?.message || details?.statusText || details?.statusMessage || [
       "HTTPError",
       status,
@@ -16493,7 +16589,8 @@ function prepareResponse(val, event, config2, nested) {
     }
     if (error.unhandled && !config2.silent) console.error(error);
     const { onError } = config2;
-    return onError && !nested ? Promise.resolve(onError(error, event)).catch((error2) => error2).then((newVal) => prepareResponse(newVal ?? val, event, config2, true)) : errorResponse(error, config2.debug);
+    const errHeaders = event[kEventRes]?.[kEventResErrHeaders];
+    return onError && !nested ? Promise.resolve(onError(error, event)).catch((error2) => error2).then((newVal) => prepareResponse(newVal ?? val, event, config2, true)) : errorResponse(error, config2.debug, errHeaders);
   }
   const preparedRes = event[kEventRes];
   const preparedHeaders = preparedRes?.[kEventResHeaders];
@@ -16576,17 +16673,18 @@ function prepareResponseBody(val, event, config2) {
 function nullBody(method, status) {
   return method === "HEAD" || status === 100 || status === 101 || status === 102 || status === 204 || status === 205 || status === 304;
 }
-function errorResponse(error, debug) {
+function errorResponse(error, debug, errHeaders) {
+  let headers = error.headers ? mergeHeaders$1(jsonHeaders, error.headers) : new Headers(jsonHeaders);
+  if (errHeaders) headers = mergeHeaders$1(headers, errHeaders);
   return new FastResponse(JSON.stringify({
     ...error.toJSON(),
     stack: debug && error.stack ? error.stack.split("\n").map((l) => l.trim()) : void 0
   }, void 0, debug ? 2 : void 0), {
     status: error.status,
     statusText: error.statusText,
-    headers: error.headers ? mergeHeaders$1(jsonHeaders, error.headers) : new Headers(jsonHeaders)
+    headers
   });
 }
-new TextEncoder();
 var GLOBAL_EVENT_STORAGE_KEY = /* @__PURE__ */ Symbol.for("tanstack-start:event-storage");
 var globalObj$1 = globalThis;
 if (!globalObj$1[GLOBAL_EVENT_STORAGE_KEY]) globalObj$1[GLOBAL_EVENT_STORAGE_KEY] = new AsyncLocalStorage$1();
@@ -16619,7 +16717,16 @@ function attachResponseHeaders(value, event) {
 }
 function requestHandler(handler) {
   return (request, requestOpts) => {
-    const h3Event = new H3Event(request);
+    let h3Event;
+    try {
+      h3Event = new H3Event(request);
+    } catch (error) {
+      if (error instanceof URIError) return new Response(null, {
+        status: 400,
+        statusText: "Bad Request"
+      });
+      throw error;
+    }
     return toResponse(attachResponseHeaders(eventStorage.run({ h3Event }, () => handler(request, requestOpts)), h3Event), h3Event);
   };
 }
@@ -16633,51 +16740,51 @@ function getResponse() {
 }
 var HEADERS = { TSS_SHELL: "X-TSS_SHELL" };
 async function getStartManifest(matchedRoutes) {
-  const { tsrStartManifest } = await import("./_tanstack-start-manifest_v-C-P0mvLM.js");
+  const { tsrStartManifest } = await import("./_tanstack-start-manifest_v-CemTM7SI.js");
   const startManifest = tsrStartManifest();
   const rootRoute = startManifest.routes[rootRouteId] = startManifest.routes[rootRouteId] || {};
   rootRoute.assets = rootRoute.assets || [];
   let injectedHeadScripts;
   return {
-    manifest: { routes: Object.fromEntries(Object.entries(startManifest.routes).flatMap(([k2, v2]) => {
-      const result = {};
-      let hasData = false;
-      if (v2.preloads && v2.preloads.length > 0) {
-        result["preloads"] = v2.preloads;
-        hasData = true;
-      }
-      if (v2.assets && v2.assets.length > 0) {
-        result["assets"] = v2.assets;
-        hasData = true;
-      }
-      if (!hasData) return [];
-      return [[k2, result]];
-    })) },
+    manifest: {
+      inlineCss: startManifest.inlineCss,
+      routes: Object.fromEntries(Object.entries(startManifest.routes).flatMap(([k2, v2]) => {
+        const result = {};
+        let hasData = false;
+        if (v2.preloads && v2.preloads.length > 0) {
+          result["preloads"] = v2.preloads;
+          hasData = true;
+        }
+        if (v2.assets && v2.assets.length > 0) {
+          result["assets"] = v2.assets;
+          hasData = true;
+        }
+        if (!hasData) return [];
+        return [[k2, result]];
+      }))
+    },
     clientEntry: startManifest.clientEntry,
     injectedHeadScripts
   };
 }
-const manifest = { "cc809242f2983b54882c1e9901d6fbce953c3ef42e351c22150d81f86577256a": {
-  functionName: "analyzeInflation_createServerFn_handler",
-  importer: () => import("./ai.functions-DZySZJe4.js")
-} };
-async function getServerFnById(id) {
+const manifest = {
+  "cc809242f2983b54882c1e9901d6fbce953c3ef42e351c22150d81f86577256a": {
+    functionName: "analyzeInflation_createServerFn_handler",
+    importer: () => import("./ai.functions-BJjYYYaB.js")
+  }
+};
+async function getServerFnById(id, access) {
   const serverFnInfo = manifest[id];
   if (!serverFnInfo) {
     throw new Error("Server function info not found for " + id);
   }
-  const fnModule = await serverFnInfo.importer();
+  const fnModule = serverFnInfo.module ?? await serverFnInfo.importer();
   if (!fnModule) {
-    console.info("serverFnInfo", serverFnInfo);
     throw new Error("Server function module not resolved for " + id);
   }
   const action = fnModule[serverFnInfo.functionName];
   if (!action) {
-    console.info("serverFnInfo", serverFnInfo);
-    console.info("fnModule", fnModule);
-    throw new Error(
-      `Server function module export not resolved for serverFn ID: ${id}`
-    );
+    throw new Error("Server function module export not resolved for serverFn ID: " + id);
   }
   return action;
 }
@@ -16786,7 +16893,7 @@ var createServerFn = (options, __opts) => {
             ...extractedFn,
             ...opts,
             serverFnMeta: extractedFn.serverFnMeta,
-            context: safeObjectMerge(serverContextAfterGlobalMiddlewares, opts.context),
+            context: safeObjectMerge(opts.context, serverContextAfterGlobalMiddlewares),
             request: startContext.request
           }).then((d) => ({
             result: d.result,
@@ -16899,11 +17006,11 @@ function serverFnBaseToMiddleware(options) {
     "~types": void 0,
     options: {
       inputValidator: options.inputValidator,
-      client: async ({ next, sendContext, fetch, ...ctx }) => {
+      client: async ({ next, sendContext, fetch: fetch2, ...ctx }) => {
         const payload = {
           ...ctx,
           context: sendContext,
-          fetch
+          fetch: fetch2
         };
         return next(await options.extractedFn?.(payload));
       },
@@ -16920,7 +17027,7 @@ function serverFnBaseToMiddleware(options) {
 function getDefaultSerovalPlugins() {
   return [...getStartOptions()?.serializationAdapters?.map(makeSerovalPlugin) ?? [], ...defaultSerovalPlugins];
 }
-var textEncoder$1 = new TextEncoder();
+var textEncoder = new TextEncoder();
 var EMPTY_PAYLOAD = new Uint8Array(0);
 function encodeFrame(type, streamId, payload) {
   const frame = new Uint8Array(FRAME_HEADER_SIZE + payload.length);
@@ -16937,7 +17044,7 @@ function encodeFrame(type, streamId, payload) {
   return frame;
 }
 function encodeJSONFrame(json) {
-  return encodeFrame(FrameType.JSON, 0, textEncoder$1.encode(json));
+  return encodeFrame(FrameType.JSON, 0, textEncoder.encode(json));
 }
 function encodeChunkFrame(streamId, chunk) {
   return encodeFrame(FrameType.CHUNK, streamId, chunk);
@@ -16947,98 +17054,106 @@ function encodeEndFrame(streamId) {
 }
 function encodeErrorFrame(streamId, error) {
   const message = error instanceof Error ? error.message : String(error ?? "Unknown error");
-  return encodeFrame(FrameType.ERROR, streamId, textEncoder$1.encode(message));
+  return encodeFrame(FrameType.ERROR, streamId, textEncoder.encode(message));
 }
-function createMultiplexedStream(jsonStream, rawStreams) {
-  let activePumps = 1 + rawStreams.size;
-  let controllerRef = null;
+function createMultiplexedStream(jsonStream, rawStreams, lateStreamSource) {
+  let controller;
   let cancelled = false;
-  const cancelReaders = [];
-  const safeEnqueue = (chunk) => {
-    if (cancelled || !controllerRef) return;
+  const readers = [];
+  const enqueue = (frame) => {
+    if (cancelled) return false;
     try {
-      controllerRef.enqueue(chunk);
+      controller.enqueue(frame);
+      return true;
     } catch {
+      return false;
     }
   };
-  const safeError = (err) => {
-    if (cancelled || !controllerRef) return;
+  const errorOutput = (error) => {
+    if (cancelled) return;
+    cancelled = true;
     try {
-      controllerRef.error(err);
+      controller.error(error);
     } catch {
     }
+    for (const reader of readers) reader.cancel().catch(() => {
+    });
   };
-  const safeClose = () => {
-    if (cancelled || !controllerRef) return;
+  async function pumpRawStream(streamId, stream) {
+    const reader = stream.getReader();
+    readers.push(reader);
     try {
-      controllerRef.close();
-    } catch {
+      while (!cancelled) {
+        const { done, value } = await reader.read();
+        if (done) {
+          enqueue(encodeEndFrame(streamId));
+          return;
+        }
+        if (!enqueue(encodeChunkFrame(streamId, value))) return;
+      }
+    } catch (error) {
+      enqueue(encodeErrorFrame(streamId, error));
+    } finally {
+      reader.releaseLock();
     }
-  };
-  const checkComplete = () => {
-    activePumps--;
-    if (activePumps === 0) safeClose();
-  };
+  }
+  async function pumpJSON() {
+    const reader = jsonStream.getReader();
+    readers.push(reader);
+    try {
+      while (!cancelled) {
+        const { done, value } = await reader.read();
+        if (done) return;
+        if (!enqueue(encodeJSONFrame(value))) return;
+      }
+    } catch (error) {
+      errorOutput(error);
+      throw error;
+    } finally {
+      reader.releaseLock();
+    }
+  }
+  async function pumpLateStreams() {
+    if (!lateStreamSource) return [];
+    const lateStreamPumps = [];
+    const reader = lateStreamSource.getReader();
+    readers.push(reader);
+    try {
+      while (!cancelled) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        lateStreamPumps.push(pumpRawStream(value.id, value.stream));
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    return lateStreamPumps;
+  }
   return new ReadableStream({
-    start(controller) {
-      controllerRef = controller;
-      cancelReaders.length = 0;
-      const pumpJSON = async () => {
-        const reader = jsonStream.getReader();
-        cancelReaders.push(() => {
-          reader.cancel().catch(() => {
-          });
-        });
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (cancelled) break;
-            if (done) break;
-            safeEnqueue(encodeJSONFrame(value));
-          }
-        } catch (error) {
-          safeError(error);
-        } finally {
-          reader.releaseLock();
-          checkComplete();
+    async start(ctrl) {
+      controller = ctrl;
+      const pumps = [pumpJSON()];
+      for (const [streamId, stream] of rawStreams) pumps.push(pumpRawStream(streamId, stream));
+      if (lateStreamSource) pumps.push(pumpLateStreams());
+      try {
+        const latePumps = (await Promise.all(pumps)).find(Array.isArray);
+        if (latePumps && latePumps.length > 0) await Promise.all(latePumps);
+        if (!cancelled) try {
+          controller.close();
+        } catch {
         }
-      };
-      const pumpRawStream = async (streamId, stream) => {
-        const reader = stream.getReader();
-        cancelReaders.push(() => {
-          reader.cancel().catch(() => {
-          });
-        });
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (cancelled) break;
-            if (done) {
-              safeEnqueue(encodeEndFrame(streamId));
-              break;
-            }
-            safeEnqueue(encodeChunkFrame(streamId, value));
-          }
-        } catch (error) {
-          safeEnqueue(encodeErrorFrame(streamId, error));
-        } finally {
-          reader.releaseLock();
-          checkComplete();
-        }
-      };
-      pumpJSON();
-      for (const [streamId, stream] of rawStreams) pumpRawStream(streamId, stream);
+      } catch {
+      }
     },
     cancel() {
       cancelled = true;
-      controllerRef = null;
-      for (const cancelReader of cancelReaders) cancelReader();
-      cancelReaders.length = 0;
+      for (const reader of readers) reader.cancel().catch(() => {
+      });
+      readers.length = 0;
     }
   });
 }
 var serovalPlugins = void 0;
-var textEncoder = new TextEncoder();
 var FORM_DATA_CONTENT_TYPES = ["multipart/form-data", "application/x-www-form-urlencoded"];
 var MAX_PAYLOAD_SIZE = 1e6;
 var handleServerAction = async ({ request, context, serverFnId }) => {
@@ -17062,8 +17177,27 @@ var handleServerAction = async ({ request, context, serverFnId }) => {
         const alsResponse = getResponse();
         if (res2 !== void 0) {
           const rawStreams = /* @__PURE__ */ new Map();
-          const plugins = [createRawStreamRPCPlugin((id, stream2) => {
-            rawStreams.set(id, stream2);
+          let initialPhase = true;
+          let lateStreamWriter;
+          let lateStreamReadable = void 0;
+          const pendingLateStreams = [];
+          const plugins = [/* @__PURE__ */ createRawStreamRPCPlugin((id, stream) => {
+            if (initialPhase) {
+              rawStreams.set(id, stream);
+              return;
+            }
+            if (lateStreamWriter) {
+              lateStreamWriter.write({
+                id,
+                stream
+              }).catch(() => {
+              });
+              return;
+            }
+            pendingLateStreams.push({
+              id,
+              stream
+            });
           }), ...serovalPlugins || []];
           let done = false;
           const callbacks = {
@@ -17090,6 +17224,7 @@ var handleServerAction = async ({ request, context, serverFnId }) => {
               callbacks.onError(error);
             }
           });
+          initialPhase = false;
           if (done && rawStreams.size === 0) return new Response(nonStreamingBody ? JSON.stringify(nonStreamingBody) : void 0, {
             status: alsResponse.status,
             statusText: alsResponse.statusText,
@@ -17098,8 +17233,14 @@ var handleServerAction = async ({ request, context, serverFnId }) => {
               [X_TSS_SERIALIZED]: "true"
             }
           });
-          if (rawStreams.size > 0) {
-            const multiplexedStream = createMultiplexedStream(new ReadableStream({ start(controller) {
+          const { readable, writable } = new TransformStream();
+          lateStreamReadable = readable;
+          lateStreamWriter = writable.getWriter();
+          for (const registration of pendingLateStreams) lateStreamWriter.write(registration).catch(() => {
+          });
+          pendingLateStreams.length = 0;
+          const multiplexedStream = createMultiplexedStream(new ReadableStream({
+            start(controller) {
               callbacks.onParse = (value) => {
                 controller.enqueue(JSON.stringify(value) + "\n");
               };
@@ -17108,36 +17249,32 @@ var handleServerAction = async ({ request, context, serverFnId }) => {
                   controller.close();
                 } catch {
                 }
+                lateStreamWriter?.close().catch(() => {
+                }).finally(() => {
+                  lateStreamWriter = void 0;
+                });
               };
-              callbacks.onError = (error) => controller.error(error);
-              if (nonStreamingBody !== void 0) callbacks.onParse(nonStreamingBody);
-            } }), rawStreams);
-            return new Response(multiplexedStream, {
-              status: alsResponse.status,
-              statusText: alsResponse.statusText,
-              headers: {
-                "Content-Type": TSS_CONTENT_TYPE_FRAMED_VERSIONED,
-                [X_TSS_SERIALIZED]: "true"
-              }
-            });
-          }
-          const stream = new ReadableStream({ start(controller) {
-            callbacks.onParse = (value) => controller.enqueue(textEncoder.encode(JSON.stringify(value) + "\n"));
-            callbacks.onDone = () => {
-              try {
-                controller.close();
-              } catch (error) {
+              callbacks.onError = (error) => {
                 controller.error(error);
-              }
-            };
-            callbacks.onError = (error) => controller.error(error);
-            if (nonStreamingBody !== void 0) callbacks.onParse(nonStreamingBody);
-          } });
-          return new Response(stream, {
+                lateStreamWriter?.abort(error).catch(() => {
+                }).finally(() => {
+                  lateStreamWriter = void 0;
+                });
+              };
+              if (nonStreamingBody !== void 0) callbacks.onParse(nonStreamingBody);
+              if (done) callbacks.onDone();
+            },
+            cancel() {
+              lateStreamWriter?.abort().catch(() => {
+              });
+              lateStreamWriter = void 0;
+            }
+          }), rawStreams, lateStreamReadable);
+          return new Response(multiplexedStream, {
             status: alsResponse.status,
             statusText: alsResponse.statusText,
             headers: {
-              "Content-Type": "application/x-ndjson",
+              "Content-Type": TSS_CONTENT_TYPE_FRAMED_VERSIONED,
               [X_TSS_SERIALIZED]: "true"
             }
           });
@@ -17163,7 +17300,7 @@ var handleServerAction = async ({ request, context, serverFnId }) => {
           };
           if (typeof serializedContext === "string") try {
             const deserializedContext = Iu(JSON.parse(serializedContext), { plugins: serovalPlugins });
-            if (typeof deserializedContext === "object" && deserializedContext) params.context = safeObjectMerge(context, deserializedContext);
+            if (typeof deserializedContext === "object" && deserializedContext) params.context = safeObjectMerge(deserializedContext, context);
           } catch (e) {
             if (false) ;
           }
@@ -17173,7 +17310,7 @@ var handleServerAction = async ({ request, context, serverFnId }) => {
           const payloadParam = url.searchParams.get("payload");
           if (payloadParam && payloadParam.length > MAX_PAYLOAD_SIZE) throw new Error("Payload too large");
           const payload2 = payloadParam ? parsePayload(JSON.parse(payloadParam)) : {};
-          payload2.context = safeObjectMerge(context, payload2.context);
+          payload2.context = safeObjectMerge(payload2.context, context);
           payload2.method = methodUpper;
           return await action(payload2);
         }
@@ -17329,7 +17466,7 @@ async function transformManifestAssets(source, transformFn, _opts) {
         crossOrigin: result.crossOrigin
       });
     }));
-    if (route.assets) {
+    if (route.assets && !source.manifest.inlineCss) {
       for (const asset of route.assets) if (asset.tag === "link" && asset.attrs?.href) {
         const rel = asset.attrs.rel;
         if (!(typeof rel === "string" ? rel.split(/\s+/) : []).includes("stylesheet")) continue;
@@ -17347,23 +17484,25 @@ async function transformManifestAssets(source, transformFn, _opts) {
     url: source.clientEntry,
     kind: "clientEntry"
   }));
-  const rootRoute = manifest2.routes[rootRouteId];
-  if (rootRoute) {
-    rootRoute.assets = rootRoute.assets || [];
-    rootRoute.assets.push(buildClientEntryScriptTag(transformedClientEntry.href, source.injectedHeadScripts));
-  }
+  const rootRoute = manifest2.routes[rootRouteId] = manifest2.routes[rootRouteId] || {};
+  rootRoute.assets = rootRoute.assets || [];
+  rootRoute.assets.push(buildClientEntryScriptTag(transformedClientEntry.href, source.injectedHeadScripts));
   return manifest2;
 }
 function buildManifestWithClientEntry(source) {
   const scriptTag = buildClientEntryScriptTag(source.clientEntry, source.injectedHeadScripts);
   const baseRootRoute = source.manifest.routes[rootRouteId];
-  return { routes: {
+  const routes = {
     ...source.manifest.routes,
-    ...baseRootRoute ? { [rootRouteId]: {
+    [rootRouteId]: {
       ...baseRootRoute,
-      assets: [...baseRootRoute.assets || [], scriptTag]
-    } } : {}
-  } };
+      assets: [...baseRootRoute?.assets || [], scriptTag]
+    }
+  };
+  return {
+    inlineCss: source.manifest.inlineCss,
+    routes
+  };
 }
 var ServerFunctionSerializationAdapter = createSerializationAdapter({
   key: "$TSS/serverfn",
@@ -17381,7 +17520,7 @@ var ServerFunctionSerializationAdapter = createSerializationAdapter({
   }
 });
 function getStartResponseHeaders(opts) {
-  return mergeHeaders({ "Content-Type": "text/html; charset=utf-8" }, ...opts.router.stores.activeMatchesSnapshot.state.map((match) => {
+  return mergeHeaders({ "Content-Type": "text/html; charset=utf-8" }, ...opts.router.stores.matches.get().map((match) => {
     return match.headers;
   }));
 }
@@ -17389,10 +17528,15 @@ var entriesPromise;
 var baseManifestPromise;
 var cachedFinalManifestPromise;
 async function loadEntries() {
-  const routerEntry = await import("./router-CXsUoBOm.js").then((n2) => n2.r);
+  const [routerEntry, startEntry, pluginAdapters] = await Promise.all([
+    import("./router-9K8hjxIZ.js").then((n2) => n2.r),
+    import("./start-HYkvq4Ni.js"),
+    import("./__23tanstack-start-plugin-adapters-Cwee5PKy.js")
+  ]);
   return {
-    startEntry: await import("./start-HYkvq4Ni.js"),
-    routerEntry
+    routerEntry,
+    startEntry,
+    pluginAdapters
   };
 }
 function getEntries() {
@@ -17522,7 +17666,12 @@ function createStartHandler(cbOrOptions) {
       if (handledProtocolRelativeURL) return Response.redirect(url, 308);
       const entries = await getEntries();
       const startOptions = await entries.startEntry.startInstance?.getOptions() || {};
-      const serializationAdapters = [...startOptions.serializationAdapters || [], ServerFunctionSerializationAdapter];
+      const { hasPluginAdapters, pluginSerializationAdapters } = entries.pluginAdapters;
+      const serializationAdapters = [
+        ...startOptions.serializationAdapters || [],
+        ...hasPluginAdapters ? pluginSerializationAdapters : [],
+        ServerFunctionSerializationAdapter
+      ];
       const requestStartOptions = {
         ...startOptions,
         serializationAdapters
@@ -17555,7 +17704,8 @@ function createStartHandler(cbOrOptions) {
             startOptions: requestStartOptions,
             contextAfterGlobalMiddlewares: context,
             request,
-            executedRequestMiddlewares
+            executedRequestMiddlewares,
+            handlerType: "serverFn"
           }, () => handleServerAction({
             request,
             context: requestOpts?.context,
@@ -17578,12 +17728,15 @@ function createStartHandler(cbOrOptions) {
         const routerInstance = await getRouter();
         attachRouterServerSsrUtils({
           router: routerInstance,
-          manifest: manifest2
+          manifest: manifest2,
+          getRequestAssets: () => getStartContext({ throwIfNotFound: false })?.requestAssets,
+          includeUnmatchedRouteAssets: false
         });
         routerInstance.update({ additionalContext: { serverContext } });
         await routerInstance.load();
         if (routerInstance.state.redirect) return routerInstance.state.redirect;
-        await routerInstance.serverSsr.dehydrate();
+        const ctx = getStartContext({ throwIfNotFound: false });
+        await routerInstance.serverSsr.dehydrate({ requestAssets: ctx?.requestAssets });
         const responseHeaders = getStartResponseHeaders({ router: routerInstance });
         cbWillCleanup = true;
         return cb({
@@ -17598,7 +17751,8 @@ function createStartHandler(cbOrOptions) {
           startOptions: requestStartOptions,
           contextAfterGlobalMiddlewares: context,
           request,
-          executedRequestMiddlewares
+          executedRequestMiddlewares,
+          handlerType: "router"
         }, async () => {
           try {
             return await handleServerRoutes({
@@ -17687,72 +17841,75 @@ async function handleServerRoutes({ getRouter, request, url, executeRouter, cont
     pathname
   })).response;
 }
-var fetch$1 = createStartHandler(defaultStreamHandler);
+var fetch = createStartHandler(defaultStreamHandler);
 function createServerEntry(entry) {
   return { async fetch(...args) {
     return await entry.fetch(...args);
   } };
 }
-var server_default = createServerEntry({ fetch: fetch$1 });
+var server_default = createServerEntry({ fetch });
 const workerEntry = server_default ?? {};
 export {
-  createServerFn as $,
-  nullReplaceEqualDeep as A,
-  replaceEqualDeep as B,
-  last as C,
+  resolveManifestAssetLink as $,
+  buildRouteBranch as A,
+  interpolatePath as B,
+  nullReplaceEqualDeep as C,
   DEFAULT_PROTOCOL_ALLOWLIST as D,
-  decodePath as E,
-  findFlatMatch as F,
-  functionalUpdate as G,
-  findRouteMatch as H,
-  executeRewriteOutput as I,
-  encodePathLikeUrl as J,
-  trimPathLeft as K,
-  joinPaths as L,
-  useRouter as M,
-  dummyMatchContext as N,
-  matchContext as O,
-  requireReactDom as P,
-  exactPathTest as Q,
-  removeTrailingSlash as R,
-  React as S,
-  jsxRuntimeExports as T,
-  isModuleNotFoundError as U,
-  useHydrated as V,
-  escapeHtml as W,
-  getAssetCrossOrigin as X,
-  resolveManifestAssetLink as Y,
-  Outlet as Z,
-  TSS_SERVER_FUNCTION as _,
+  replaceEqualDeep as E,
+  last as F,
+  decodePath as G,
+  findFlatMatch as H,
+  findRouteMatch as I,
+  hasKeys as J,
+  executeRewriteOutput as K,
+  encodePathLikeUrl as L,
+  trimPathLeft as M,
+  joinPaths as N,
+  useRouter as O,
+  dummyMatchContext as P,
+  matchContext as Q,
+  requireReactDom as R,
+  exactPathTest as S,
+  removeTrailingSlash as T,
+  React as U,
+  jsxRuntimeExports as V,
+  isModuleNotFoundError as W,
+  useHydrated as X,
+  escapeHtml as Y,
+  isInlinableStylesheet as Z,
+  getAssetCrossOrigin as _,
   arraysEqual as a,
-  commonjsGlobal as a0,
-  getDefaultExportFromCjs as a1,
-  getServerFnById as a2,
-  createServerEntry as a3,
-  workerEntry as a4,
+  Outlet as a0,
+  TSS_SERVER_FUNCTION as a1,
+  createServerFn as a2,
+  commonjsGlobal as a3,
+  getDefaultExportFromCjs as a4,
+  getServerFnById as a5,
+  createServerEntry as a6,
+  workerEntry as a7,
   isRedirect as b,
   createLRUCache as c,
   isNotFound as d,
   invariant as e,
-  createControlledPromise as f,
-  rootRouteId as g,
-  isServer as h,
+  functionalUpdate as f,
+  createControlledPromise as g,
+  rootRouteId as h,
   isPromise as i,
-  compileDecodeCharMap as j,
-  rewriteBasepath as k,
-  composeRewrites as l,
-  processRouteMasks as m,
-  resolvePath as n,
-  cleanPath as o,
+  isServer as j,
+  compileDecodeCharMap as k,
+  rewriteBasepath as l,
+  composeRewrites as m,
+  processRouteMasks as n,
+  resolvePath as o,
   processRouteTree as p,
-  trimPathRight as q,
+  cleanPath as q,
   reactExports as r,
-  parseHref as s,
+  trimPathRight as s,
   trimPath as t,
-  executeRewriteInput as u,
-  isDangerousProtocol as v,
-  redirect as w,
-  findSingleMatch as x,
-  deepEqual as y,
-  interpolatePath as z
+  parseHref as u,
+  executeRewriteInput as v,
+  isDangerousProtocol as w,
+  redirect as x,
+  findSingleMatch as y,
+  deepEqual as z
 };

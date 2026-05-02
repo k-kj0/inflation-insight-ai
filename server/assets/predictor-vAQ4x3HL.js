@@ -1,12 +1,12 @@
-import { M as useRouter, r as reactExports, b as isRedirect, a0 as commonjsGlobal, a1 as getDefaultExportFromCjs, S as React, T as jsxRuntimeExports, _ as TSS_SERVER_FUNCTION, a2 as getServerFnById, $ as createServerFn } from "./worker-entry-BGTTXPO5.js";
-import { c as createLucideIcon, S as SiteHeader } from "./SiteHeader-B-kPMEQX.js";
-import { T as Ticker } from "./Ticker-Dc1Lv_oZ.js";
-import { S as Sparkles } from "./sparkles-Bww9dFvZ.js";
+import { O as useRouter, r as reactExports, b as isRedirect, a3 as commonjsGlobal, a4 as getDefaultExportFromCjs, U as React, V as jsxRuntimeExports, a1 as TSS_SERVER_FUNCTION, a5 as getServerFnById, a2 as createServerFn } from "./worker-entry-C6G48CJd.js";
+import { c as createLucideIcon, S as SiteHeader } from "./SiteHeader-DNF5wM7S.js";
+import { T as Ticker } from "./Ticker-BQAjdyS5.js";
+import { S as Sparkles } from "./sparkles-DwhU3Gsh.js";
 import "node:events";
 import "node:async_hooks";
 import "node:stream/web";
 import "node:stream";
-import "./router-CXsUoBOm.js";
+import "./router-9K8hjxIZ.js";
 function useServerFn(serverFn) {
   const router = useRouter();
   return reactExports.useCallback(async (...args) => {
@@ -16,7 +16,7 @@ function useServerFn(serverFn) {
       return res;
     } catch (err) {
       if (isRedirect(err)) {
-        err.options._fromLocation = router.stores.location.state;
+        err.options._fromLocation = router.stores.location.get();
         return router.navigate(router.resolveRedirect(err).options);
       }
       throw err;
@@ -24522,7 +24522,7 @@ function PredictionStats({ current, predicted, delta, riskScore, volatility }) {
     )
   ] });
 }
-var createSsrRpc = (functionId, importer) => {
+var createSsrRpc = (functionId) => {
   const url = "/_serverFn/" + functionId;
   const serverFnMeta = { id: functionId };
   const fn = async (...args) => {
@@ -24597,7 +24597,7 @@ function InfluxAIPanel(props) {
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "font-mono text-xs uppercase tracking-widest text-foreground", children: "Ask INFLUX AI" })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "font-mono text-[10px] uppercase tracking-widest text-muted-foreground", children: [
-        "claude-3.5-sonnet · ",
+        "influx-demo · ",
         props.remaining,
         " left today"
       ] })
@@ -24605,7 +24605,7 @@ function InfluxAIPanel(props) {
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-5", children: [
       !result && !loading && !error && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-start gap-4", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "max-w-xl text-sm text-muted-foreground", children: [
-          "Generate a real-time macro analysis: risk narrative, business impact, and a concrete investment signal — produced live by Claude on your selected",
+          "Generate a macro analysis: risk narrative, business impact, and a concrete investment signal — generated live for your selected",
           " ",
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-foreground", children: props.country }),
           " ·",
@@ -24620,7 +24620,7 @@ function InfluxAIPanel(props) {
             className: "group inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-widest text-primary-foreground transition-all hover:glow",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "h-3.5 w-3.5" }),
-              "Analyze with Claude"
+              "Run INFLUX Analysis"
             ]
           }
         )

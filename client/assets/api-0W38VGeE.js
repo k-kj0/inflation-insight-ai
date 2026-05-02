@@ -1,4 +1,4 @@
-import{j as e,L as t}from"./main-C6nRFKne.js";import{S as r}from"./SiteHeader-Cm9Jnx77.js";const o=`curl https://api.inflationiq.dev/v1/predict \\
+import{j as e,L as t}from"./index-BrhHo45i.js";import{S as r}from"./SiteHeader-Dk2NrujK.js";const o=`curl https://api.inflationiq.dev/v1/predict \\
   -H "Authorization: Bearer iq_live_xxx" \\
   -H "Content-Type: application/json" \\
   -d '{

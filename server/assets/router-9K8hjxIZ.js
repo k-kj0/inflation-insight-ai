@@ -1,4 +1,4 @@
-import { r as reactExports, a as arraysEqual, c as createLRUCache, i as isPromise, b as isRedirect, d as isNotFound, e as invariant, f as createControlledPromise, g as rootRouteId, h as isServer, j as compileDecodeCharMap, t as trimPath, k as rewriteBasepath, l as composeRewrites, p as processRouteTree, m as processRouteMasks, n as resolvePath, o as cleanPath, q as trimPathRight, s as parseHref, u as executeRewriteInput, v as isDangerousProtocol, w as redirect, x as findSingleMatch, y as deepEqual, D as DEFAULT_PROTOCOL_ALLOWLIST, z as interpolatePath, A as nullReplaceEqualDeep, B as replaceEqualDeep, C as last, E as decodePath, F as findFlatMatch, G as functionalUpdate, H as findRouteMatch, I as executeRewriteOutput, J as encodePathLikeUrl, K as trimPathLeft, L as joinPaths, M as useRouter, N as dummyMatchContext, O as matchContext, P as requireReactDom, Q as exactPathTest, R as removeTrailingSlash, S as React, T as jsxRuntimeExports, U as isModuleNotFoundError, V as useHydrated, W as escapeHtml, X as getAssetCrossOrigin, Y as resolveManifestAssetLink, Z as Outlet } from "./worker-entry-BGTTXPO5.js";
+import { r as reactExports, f as functionalUpdate, a as arraysEqual, c as createLRUCache, i as isPromise, b as isRedirect, d as isNotFound, e as invariant, g as createControlledPromise, h as rootRouteId, j as isServer, k as compileDecodeCharMap, t as trimPath, l as rewriteBasepath, m as composeRewrites, p as processRouteTree, n as processRouteMasks, o as resolvePath, q as cleanPath, s as trimPathRight, u as parseHref, v as executeRewriteInput, w as isDangerousProtocol, x as redirect, y as findSingleMatch, z as deepEqual, D as DEFAULT_PROTOCOL_ALLOWLIST, A as buildRouteBranch, B as interpolatePath, C as nullReplaceEqualDeep, E as replaceEqualDeep, F as last, G as decodePath, H as findFlatMatch, I as findRouteMatch, J as hasKeys, K as executeRewriteOutput, L as encodePathLikeUrl, M as trimPathLeft, N as joinPaths, O as useRouter, P as dummyMatchContext, Q as matchContext, R as requireReactDom, S as exactPathTest, T as removeTrailingSlash, U as React, V as jsxRuntimeExports, W as isModuleNotFoundError, X as useHydrated, Y as escapeHtml, Z as isInlinableStylesheet, _ as getAssetCrossOrigin, $ as resolveManifestAssetLink, a0 as Outlet } from "./worker-entry-C6G48CJd.js";
 var reactUse = reactExports.use;
 function useForwardedRef(ref) {
   const innerRef = reactExports.useRef(null);
@@ -30,8 +30,8 @@ function decode(str) {
   }
   return result;
 }
-var defaultParseSearch = parseSearchWith(JSON.parse);
-var defaultStringifySearch = stringifySearchWith(JSON.stringify, JSON.parse);
+const defaultParseSearch = parseSearchWith(JSON.parse);
+const defaultStringifySearch = stringifySearchWith(JSON.stringify, JSON.parse);
 function parseSearchWith(parser) {
   return (searchStr) => {
     if (searchStr[0] === "?") searchStr = searchStr.substring(1);
@@ -68,24 +68,24 @@ function stringifySearchWith(stringify, parser) {
 function createNonReactiveMutableStore(initialValue) {
   let value = initialValue;
   return {
-    get state() {
+    get() {
       return value;
     },
-    setState(updater) {
-      value = updater(value);
+    set(nextOrUpdater) {
+      value = functionalUpdate(nextOrUpdater, value);
     }
   };
 }
 function createNonReactiveReadonlyStore(read) {
-  return { get state() {
+  return { get() {
     return read();
   } };
 }
 function createRouterStores(initialState, config) {
   const { createMutableStore, createReadonlyStore, batch, init } = config;
-  const activeMatchStoresById = /* @__PURE__ */ new Map();
-  const pendingMatchStoresById = /* @__PURE__ */ new Map();
-  const cachedMatchStoresById = /* @__PURE__ */ new Map();
+  const matchStores = /* @__PURE__ */ new Map();
+  const pendingMatchStores = /* @__PURE__ */ new Map();
+  const cachedMatchStores = /* @__PURE__ */ new Map();
   const status = createMutableStore(initialState.status);
   const loadedAt = createMutableStore(initialState.loadedAt);
   const isLoading = createMutableStore(initialState.isLoading);
@@ -95,40 +95,40 @@ function createRouterStores(initialState, config) {
   const statusCode = createMutableStore(initialState.statusCode);
   const redirect2 = createMutableStore(initialState.redirect);
   const matchesId = createMutableStore([]);
-  const pendingMatchesId = createMutableStore([]);
-  const cachedMatchesId = createMutableStore([]);
-  const activeMatchesSnapshot = createReadonlyStore(() => readPoolMatches(activeMatchStoresById, matchesId.state));
-  const pendingMatchesSnapshot = createReadonlyStore(() => readPoolMatches(pendingMatchStoresById, pendingMatchesId.state));
-  const cachedMatchesSnapshot = createReadonlyStore(() => readPoolMatches(cachedMatchStoresById, cachedMatchesId.state));
-  const firstMatchId = createReadonlyStore(() => matchesId.state[0]);
-  const hasPendingMatches = createReadonlyStore(() => matchesId.state.some((matchId) => {
-    return activeMatchStoresById.get(matchId)?.state.status === "pending";
+  const pendingIds = createMutableStore([]);
+  const cachedIds = createMutableStore([]);
+  const matches = createReadonlyStore(() => readPoolMatches(matchStores, matchesId.get()));
+  const pendingMatches = createReadonlyStore(() => readPoolMatches(pendingMatchStores, pendingIds.get()));
+  const cachedMatches = createReadonlyStore(() => readPoolMatches(cachedMatchStores, cachedIds.get()));
+  const firstId = createReadonlyStore(() => matchesId.get()[0]);
+  const hasPending = createReadonlyStore(() => matchesId.get().some((matchId) => {
+    return matchStores.get(matchId)?.get().status === "pending";
   }));
-  const matchRouteReactivity = createReadonlyStore(() => ({
-    locationHref: location.state.href,
-    resolvedLocationHref: resolvedLocation.state?.href,
-    status: status.state
+  const matchRouteDeps = createReadonlyStore(() => ({
+    locationHref: location.get().href,
+    resolvedLocationHref: resolvedLocation.get()?.href,
+    status: status.get()
   }));
   const __store = createReadonlyStore(() => ({
-    status: status.state,
-    loadedAt: loadedAt.state,
-    isLoading: isLoading.state,
-    isTransitioning: isTransitioning.state,
-    matches: activeMatchesSnapshot.state,
-    location: location.state,
-    resolvedLocation: resolvedLocation.state,
-    statusCode: statusCode.state,
-    redirect: redirect2.state
+    status: status.get(),
+    loadedAt: loadedAt.get(),
+    isLoading: isLoading.get(),
+    isTransitioning: isTransitioning.get(),
+    matches: matches.get(),
+    location: location.get(),
+    resolvedLocation: resolvedLocation.get(),
+    statusCode: statusCode.get(),
+    redirect: redirect2.get()
   }));
   const matchStoreByRouteIdCache = createLRUCache(64);
-  function getMatchStoreByRouteId(routeId) {
+  function getRouteMatchStore(routeId) {
     let cached = matchStoreByRouteIdCache.get(routeId);
     if (!cached) {
       cached = createReadonlyStore(() => {
-        const ids = matchesId.state;
+        const ids = matchesId.get();
         for (const id of ids) {
-          const matchStore = activeMatchStoresById.get(id);
-          if (matchStore && matchStore.routeId === routeId) return matchStore.state;
+          const matchStore = matchStores.get(id);
+          if (matchStore && matchStore.routeId === routeId) return matchStore.get();
         }
       });
       matchStoreByRouteIdCache.set(routeId, cached);
@@ -145,33 +145,33 @@ function createRouterStores(initialState, config) {
     statusCode,
     redirect: redirect2,
     matchesId,
-    pendingMatchesId,
-    cachedMatchesId,
-    activeMatchesSnapshot,
-    pendingMatchesSnapshot,
-    cachedMatchesSnapshot,
-    firstMatchId,
-    hasPendingMatches,
-    matchRouteReactivity,
-    activeMatchStoresById,
-    pendingMatchStoresById,
-    cachedMatchStoresById,
+    pendingIds,
+    cachedIds,
+    matches,
+    pendingMatches,
+    cachedMatches,
+    firstId,
+    hasPending,
+    matchRouteDeps,
+    matchStores,
+    pendingMatchStores,
+    cachedMatchStores,
     __store,
-    getMatchStoreByRouteId,
-    setActiveMatches,
-    setPendingMatches,
-    setCachedMatches
+    getRouteMatchStore,
+    setMatches,
+    setPending,
+    setCached
   };
-  setActiveMatches(initialState.matches);
+  setMatches(initialState.matches);
   init?.(store);
-  function setActiveMatches(nextMatches) {
-    reconcileMatchPool(nextMatches, activeMatchStoresById, matchesId, createMutableStore, batch);
+  function setMatches(nextMatches) {
+    reconcileMatchPool(nextMatches, matchStores, matchesId, createMutableStore, batch);
   }
-  function setPendingMatches(nextMatches) {
-    reconcileMatchPool(nextMatches, pendingMatchStoresById, pendingMatchesId, createMutableStore, batch);
+  function setPending(nextMatches) {
+    reconcileMatchPool(nextMatches, pendingMatchStores, pendingIds, createMutableStore, batch);
   }
-  function setCachedMatches(nextMatches) {
-    reconcileMatchPool(nextMatches, cachedMatchStoresById, cachedMatchesId, createMutableStore, batch);
+  function setCached(nextMatches) {
+    reconcileMatchPool(nextMatches, cachedMatchStores, cachedIds, createMutableStore, batch);
   }
   return store;
 }
@@ -179,7 +179,7 @@ function readPoolMatches(pool, ids) {
   const matches = [];
   for (const id of ids) {
     const matchStore = pool.get(id);
-    if (matchStore) matches.push(matchStore.state);
+    if (matchStore) matches.push(matchStore.get());
   }
   return matches;
 }
@@ -197,21 +197,21 @@ function reconcileMatchPool(nextMatches, pool, idStore, createMutableStore, batc
         continue;
       }
       existing.routeId = nextMatch.routeId;
-      if (existing.state !== nextMatch) existing.setState(() => nextMatch);
+      if (existing.get() !== nextMatch) existing.set(nextMatch);
     }
-    if (!arraysEqual(idStore.state, nextIds)) idStore.setState(() => nextIds);
+    if (!arraysEqual(idStore.get(), nextIds)) idStore.set(nextIds);
   });
 }
-var triggerOnReady = (inner) => {
+const triggerOnReady = (inner) => {
   if (!inner.rendered) {
     inner.rendered = true;
     return inner.onReady?.();
   }
 };
-var resolvePreload = (inner, matchId) => {
-  return !!(inner.preload && !inner.router.stores.activeMatchStoresById.has(matchId));
+const resolvePreload = (inner, matchId) => {
+  return !!(inner.preload && !inner.router.stores.matchStores.has(matchId));
 };
-var buildMatchContext = (inner, index, includeCurrentMatch = true) => {
+const buildMatchContext = (inner, index, includeCurrentMatch = true) => {
   const context = { ...inner.router.options.context ?? {} };
   const end = includeCurrentMatch ? index : index - 1;
   for (let i = 0; i <= end; i++) {
@@ -223,7 +223,7 @@ var buildMatchContext = (inner, index, includeCurrentMatch = true) => {
   }
   return context;
 };
-var getNotFoundBoundaryIndex = (inner, err) => {
+const getNotFoundBoundaryIndex = (inner, err) => {
   if (!inner.matches.length) return;
   const requestedRouteId = err.routeId;
   const matchedRootIndex = inner.matches.findIndex((m) => m.routeId === inner.router.routeTree.id);
@@ -236,7 +236,7 @@ var getNotFoundBoundaryIndex = (inner, err) => {
   }
   return requestedRouteId ? startIndex : rootIndex;
 };
-var handleRedirectAndNotFound = (inner, match, err) => {
+const handleRedirectAndNotFound = (inner, match, err) => {
   if (!isRedirect(err) && !isNotFound(err)) return;
   if (isRedirect(err) && err.redirectHandled && !err.options.reloadDocument) throw err;
   if (match) {
@@ -247,7 +247,7 @@ var handleRedirectAndNotFound = (inner, match, err) => {
     match._nonReactive.error = err;
     inner.updateMatch(match.id, (prev) => ({
       ...prev,
-      status: isRedirect(err) ? "redirected" : prev.status === "pending" ? "success" : prev.status,
+      status: isRedirect(err) ? "redirected" : isNotFound(err) ? "notFound" : prev.status === "pending" ? "success" : prev.status,
       context: buildMatchContext(inner, match.index),
       isFetching: false,
       error: err
@@ -263,13 +263,13 @@ var handleRedirectAndNotFound = (inner, match, err) => {
   }
   throw err;
 };
-var shouldSkipLoader = (inner, matchId) => {
+const shouldSkipLoader = (inner, matchId) => {
   const match = inner.router.getMatch(matchId);
   if (!match) return true;
   if (match.ssr === false) return true;
   return false;
 };
-var syncMatchContext = (inner, matchId, index) => {
+const syncMatchContext = (inner, matchId, index) => {
   const nextContext = buildMatchContext(inner, index);
   inner.updateMatch(matchId, (prev) => {
     return {
@@ -278,7 +278,7 @@ var syncMatchContext = (inner, matchId, index) => {
     };
   });
 };
-var handleSerialError = (inner, index, err, routerCode) => {
+const handleSerialError = (inner, index, err, routerCode) => {
   const { id: matchId, routeId } = inner.matches[index];
   const route = inner.router.looseRoutesById[routeId];
   if (err instanceof Promise) throw err;
@@ -306,7 +306,7 @@ var handleSerialError = (inner, index, err, routerCode) => {
   });
   if (!inner.preload && !isRedirect(err) && !isNotFound(err)) inner.serialError ??= err;
 };
-var isBeforeLoadSsr = (inner, matchId, index, route) => {
+const isBeforeLoadSsr = (inner, matchId, index, route) => {
   const existingMatch = inner.router.getMatch(matchId);
   const parentMatchId = inner.matches[index - 1]?.id;
   const parentMatch = parentMatchId ? inner.router.getMatch(parentMatchId) : void 0;
@@ -354,7 +354,7 @@ var isBeforeLoadSsr = (inner, matchId, index, route) => {
   });
   existingMatch.ssr = parentOverride(tempSsr ?? defaultSsr);
 };
-var setupPendingTimeout = (inner, matchId, route, match) => {
+const setupPendingTimeout = (inner, matchId, route, match) => {
   if (match._nonReactive.pendingTimeout !== void 0) return;
   const pendingMs = route.options.pendingMs ?? inner.router.options.defaultPendingMs;
   if (!!(inner.onReady && false)) {
@@ -364,7 +364,7 @@ var setupPendingTimeout = (inner, matchId, route, match) => {
     match._nonReactive.pendingTimeout = pendingTimeout;
   }
 };
-var preBeforeLoadSetup = (inner, matchId, route) => {
+const preBeforeLoadSetup = (inner, matchId, route) => {
   const existingMatch = inner.router.getMatch(matchId);
   if (!existingMatch._nonReactive.beforeLoadPromise && !existingMatch._nonReactive.loaderPromise) return;
   setupPendingTimeout(inner, matchId, route, existingMatch);
@@ -374,7 +374,7 @@ var preBeforeLoadSetup = (inner, matchId, route) => {
   };
   return existingMatch._nonReactive.beforeLoadPromise ? existingMatch._nonReactive.beforeLoadPromise.then(then) : then();
 };
-var executeBeforeLoad = (inner, matchId, index, route) => {
+const executeBeforeLoad = (inner, matchId, index, route) => {
   const match = inner.router.getMatch(matchId);
   let prevLoadPromise = match._nonReactive.loadPromise;
   match._nonReactive.loadPromise = createControlledPromise(() => {
@@ -472,7 +472,7 @@ var executeBeforeLoad = (inner, matchId, index, route) => {
   }
   updateContext(beforeLoadContext);
 };
-var handleBeforeLoad = (inner, index) => {
+const handleBeforeLoad = (inner, index) => {
   const { id: matchId, routeId } = inner.matches[index];
   const route = inner.router.looseRoutesById[routeId];
   const serverSsr = () => {
@@ -490,7 +490,7 @@ var handleBeforeLoad = (inner, index) => {
   };
   return serverSsr();
 };
-var executeHead = (inner, matchId, route) => {
+const executeHead = (inner, matchId, route) => {
   const match = inner.router.getMatch(matchId);
   if (!match) return;
   if (!route.options.head && !route.options.scripts && !route.options.headers) return;
@@ -516,7 +516,7 @@ var executeHead = (inner, matchId, route) => {
     };
   });
 };
-var getLoaderContext = (inner, matchPromises, matchId, index, route) => {
+const getLoaderContext = (inner, matchPromises, matchId, index, route) => {
   const parentMatchPromise = matchPromises[index - 1];
   const { params, loaderDeps, abortController, cause } = inner.router.getMatch(matchId);
   const context = buildMatchContext(inner, index);
@@ -538,7 +538,7 @@ var getLoaderContext = (inner, matchPromises, matchId, index, route) => {
     ...inner.router.options.additionalContext
   };
 };
-var runLoader = async (inner, matchPromises, matchId, index, route) => {
+const runLoader = async (inner, matchPromises, matchId, index, route) => {
   try {
     const match = inner.router.getMatch(matchId);
     try {
@@ -612,7 +612,7 @@ var runLoader = async (inner, matchPromises, matchId, index, route) => {
     handleRedirectAndNotFound(inner, match, err);
   }
 };
-var loadRouteMatch = async (inner, matchPromises, index) => {
+const loadRouteMatch = async (inner, matchPromises, index) => {
   async function handleLoader(preload, prevMatch, previousRouteMatchId, match2, route2) {
     const age = Date.now() - prevMatch.updatedAt;
     const staleAge = preload ? route2.options.preloadStaleTime ?? inner.router.options.defaultPreloadStaleTime ?? 3e4 : route2.options.staleTime ?? inner.router.options.defaultStaleTime ?? 0;
@@ -651,8 +651,8 @@ var loadRouteMatch = async (inner, matchPromises, index) => {
     return inner.router.getMatch(matchId);
   } else {
     const prevMatch = inner.router.getMatch(matchId);
-    const activeIdAtIndex = inner.router.stores.matchesId.state[index];
-    const previousRouteMatchId = (activeIdAtIndex && inner.router.stores.activeMatchStoresById.get(activeIdAtIndex) || null)?.routeId === routeId ? activeIdAtIndex : inner.router.stores.activeMatchesSnapshot.state.find((d) => d.routeId === routeId)?.id;
+    const activeIdAtIndex = inner.router.stores.matchesId.get()[index];
+    const previousRouteMatchId = (activeIdAtIndex && inner.router.stores.matchStores.get(activeIdAtIndex) || null)?.routeId === routeId ? activeIdAtIndex : inner.router.stores.matches.get().find((d) => d.routeId === routeId)?.id;
     const preload = resolvePreload(inner, matchId);
     if (prevMatch._nonReactive.loaderPromise) {
       if (prevMatch.status === "success" && !inner.sync && !prevMatch.preload && shouldReloadInBackground) return prevMatch;
@@ -662,7 +662,7 @@ var loadRouteMatch = async (inner, matchPromises, index) => {
       if (error) handleRedirectAndNotFound(inner, match2, error);
       if (match2.status === "pending") await handleLoader(preload, prevMatch, previousRouteMatchId, match2, route);
     } else {
-      const nextPreload = preload && !inner.router.stores.activeMatchStoresById.has(matchId);
+      const nextPreload = preload && !inner.router.stores.matchStores.has(matchId);
       const match2 = inner.router.getMatch(matchId);
       match2._nonReactive.loaderPromise = createControlledPromise();
       if (nextPreload !== match2.preload) inner.updateMatch(matchId, (prev) => ({
@@ -831,7 +831,7 @@ function routeNeedsPreload(route) {
   for (const componentType of componentTypes) if (route.options[componentType]?.preload) return true;
   return false;
 }
-var componentTypes = [
+const componentTypes = [
   "component",
   "errorComponent",
   "pendingComponent",
@@ -860,6 +860,7 @@ var RouterCore = class {
     this.subscribers = /* @__PURE__ */ new Set();
     this.isScrollRestoring = false;
     this.isScrollRestorationSetup = false;
+    this.routeBranchCache = /* @__PURE__ */ new WeakMap();
     this.startTransition = (fn) => fn();
     this.update = (newOptions) => {
       const prevOptions = this.options;
@@ -914,7 +915,7 @@ var RouterCore = class {
         if (this.history) this.updateLatestLocation();
         needsLocationUpdate = true;
       }
-      if (needsLocationUpdate && this.stores) this.stores.location.setState(() => this.latestLocation);
+      if (needsLocationUpdate && this.stores) this.stores.location.set(this.latestLocation);
       if (typeof window !== "undefined" && "CSS" in window && typeof window.CSS?.supports === "function") this.isViewTransitionTypesSupported = window.CSS.supports("selector(:active-view-transition-type(a)");
     };
     this.updateLatestLocation = () => {
@@ -991,7 +992,7 @@ var RouterCore = class {
     this.resolvePathWithBase = (from, path) => {
       return resolvePath({
         base: from,
-        to: cleanPath(path),
+        to: path.includes("//") ? cleanPath(path) : path,
         trailingSlash: this.options.trailingSlash,
         cache: this.resolvePathCache
       });
@@ -1018,12 +1019,12 @@ var RouterCore = class {
       match._nonReactive.pendingTimeout = void 0;
     };
     this.cancelMatches = () => {
-      this.stores.pendingMatchesId.state.forEach((matchId) => {
+      this.stores.pendingIds.get().forEach((matchId) => {
         this.cancelMatch(matchId);
       });
-      this.stores.matchesId.state.forEach((matchId) => {
-        if (this.stores.pendingMatchStoresById.has(matchId)) return;
-        const match = this.stores.activeMatchStoresById.get(matchId)?.state;
+      this.stores.matchesId.get().forEach((matchId) => {
+        if (this.stores.pendingMatchStores.has(matchId)) return;
+        const match = this.stores.matchStores.get(matchId)?.get();
         if (!match) return;
         if (match.status === "pending" || match.isFetching === "loader") this.cancelMatch(matchId);
       });
@@ -1034,15 +1035,22 @@ var RouterCore = class {
         const lightweightResult = this.matchRoutesLightweight(currentLocation);
         if (dest.from && false) ;
         const defaultedFromPath = dest.unsafeRelative === "path" ? currentLocation.pathname : dest.from ?? lightweightResult.fullPath;
-        const fromPath = this.resolvePathWithBase(defaultedFromPath, ".");
+        const destTo = dest.to ? `${dest.to}` : void 0;
         const fromSearch = lightweightResult.search;
         const fromParams = Object.assign(/* @__PURE__ */ Object.create(null), lightweightResult.params);
-        const nextTo = dest.to ? this.resolvePathWithBase(fromPath, `${dest.to}`) : this.resolvePathWithBase(fromPath, ".");
+        const sourcePath = destTo?.charCodeAt(0) === 47 ? "/" : this.resolvePathWithBase(defaultedFromPath, ".");
+        const nextTo = destTo ? this.resolvePathWithBase(sourcePath, destTo) : sourcePath;
         const nextParams = dest.params === false || dest.params === null ? /* @__PURE__ */ Object.create(null) : (dest.params ?? true) === true ? fromParams : Object.assign(fromParams, functionalUpdate(dest.params, fromParams));
-        const destMatchResult = this.getMatchedRoutes(nextTo);
-        let destRoutes = destMatchResult.matchedRoutes;
-        if ((!destMatchResult.foundRoute || destMatchResult.foundRoute.path !== "/" && destMatchResult.routeParams["**"]) && this.options.notFoundRoute) destRoutes = [...destRoutes, this.options.notFoundRoute];
-        if (Object.keys(nextParams).length > 0) for (const route of destRoutes) {
+        const destRoute = this.routesByPath[trimPathRight(nextTo)];
+        let destRoutes;
+        if (destRoute) destRoutes = this.getRouteBranch(destRoute);
+        else if (nextTo.includes("$")) destRoutes = [];
+        else {
+          const destMatchResult = this.getMatchedRoutes(nextTo);
+          destRoutes = destMatchResult.matchedRoutes;
+          if (this.options.notFoundRoute && (!destMatchResult.foundRoute || destMatchResult.foundRoute.path !== "/" && destMatchResult.routeParams["**"])) destRoutes = [...destRoutes, this.options.notFoundRoute];
+        }
+        if (destRoutes.length && hasKeys(nextParams)) for (const route of destRoutes) {
           const fn = route.options.params?.stringify ?? route.options.stringifyParams;
           if (fn) try {
             Object.assign(nextParams, fn(nextParams));
@@ -1284,29 +1292,28 @@ var RouterCore = class {
         }
       }
       const pendingMatches = this.matchRoutes(this.latestLocation);
-      const nextCachedMatches = this.stores.cachedMatchesSnapshot.state.filter((d) => !pendingMatches.some((e) => e.id === d.id));
+      const nextCachedMatches = this.stores.cachedMatches.get().filter((d) => !pendingMatches.some((e) => e.id === d.id));
       this.batch(() => {
-        this.stores.status.setState(() => "pending");
-        this.stores.statusCode.setState(() => 200);
-        this.stores.isLoading.setState(() => true);
-        this.stores.location.setState(() => this.latestLocation);
-        this.stores.setPendingMatches(pendingMatches);
-        this.stores.setCachedMatches(nextCachedMatches);
+        this.stores.status.set("pending");
+        this.stores.statusCode.set(200);
+        this.stores.isLoading.set(true);
+        this.stores.location.set(this.latestLocation);
+        this.stores.setPending(pendingMatches);
+        this.stores.setCached(nextCachedMatches);
       });
     };
     this.load = async (opts) => {
       let redirect2;
       let notFound;
       let loadPromise;
-      const previousLocation = this.stores.resolvedLocation.state ?? this.stores.location.state;
+      const previousLocation = this.stores.resolvedLocation.get() ?? this.stores.location.get();
       loadPromise = new Promise((resolve) => {
         this.startTransition(async () => {
           try {
             this.beforeLoad();
             const next = this.latestLocation;
-            const prevLocation = this.stores.resolvedLocation.state;
-            const locationChangeInfo = getLocationChangeInfo(next, prevLocation);
-            if (!this.stores.redirect.state) this.emit({
+            const locationChangeInfo = getLocationChangeInfo(next, this.stores.resolvedLocation.get());
+            if (!this.stores.redirect.get()) this.emit({
               type: "onBeforeNavigate",
               ...locationChangeInfo
             });
@@ -1318,7 +1325,7 @@ var RouterCore = class {
               router: this,
               sync: opts?.sync,
               forceStaleReload: previousLocation.href === next.href,
-              matches: this.stores.pendingMatchesSnapshot.state,
+              matches: this.stores.pendingMatches.get(),
               location: next,
               updateMatch: this.updateMatch,
               onReady: async () => {
@@ -1329,23 +1336,23 @@ var RouterCore = class {
                     let hookEnteringMatches = null;
                     let hookStayingMatches = null;
                     this.batch(() => {
-                      const pendingMatches = this.stores.pendingMatchesSnapshot.state;
+                      const pendingMatches = this.stores.pendingMatches.get();
                       const mountPending = pendingMatches.length;
-                      const currentMatches = this.stores.activeMatchesSnapshot.state;
-                      exitingMatches = mountPending ? currentMatches.filter((match) => !this.stores.pendingMatchStoresById.has(match.id)) : null;
+                      const currentMatches = this.stores.matches.get();
+                      exitingMatches = mountPending ? currentMatches.filter((match) => !this.stores.pendingMatchStores.has(match.id)) : null;
                       const pendingRouteIds = /* @__PURE__ */ new Set();
-                      for (const s of this.stores.pendingMatchStoresById.values()) if (s.routeId) pendingRouteIds.add(s.routeId);
+                      for (const s of this.stores.pendingMatchStores.values()) if (s.routeId) pendingRouteIds.add(s.routeId);
                       const activeRouteIds = /* @__PURE__ */ new Set();
-                      for (const s of this.stores.activeMatchStoresById.values()) if (s.routeId) activeRouteIds.add(s.routeId);
+                      for (const s of this.stores.matchStores.values()) if (s.routeId) activeRouteIds.add(s.routeId);
                       hookExitingMatches = mountPending ? currentMatches.filter((match) => !pendingRouteIds.has(match.routeId)) : null;
                       hookEnteringMatches = mountPending ? pendingMatches.filter((match) => !activeRouteIds.has(match.routeId)) : null;
                       hookStayingMatches = mountPending ? pendingMatches.filter((match) => activeRouteIds.has(match.routeId)) : currentMatches;
-                      this.stores.isLoading.setState(() => false);
-                      this.stores.loadedAt.setState(() => Date.now());
+                      this.stores.isLoading.set(false);
+                      this.stores.loadedAt.set(Date.now());
                       if (mountPending) {
-                        this.stores.setActiveMatches(pendingMatches);
-                        this.stores.setPendingMatches([]);
-                        this.stores.setCachedMatches([...this.stores.cachedMatchesSnapshot.state, ...exitingMatches.filter((d) => d.status !== "error" && d.status !== "notFound" && d.status !== "redirected")]);
+                        this.stores.setMatches(pendingMatches);
+                        this.stores.setPending([]);
+                        this.stores.setCached([...this.stores.cachedMatches.get(), ...exitingMatches.filter((d) => d.status !== "error" && d.status !== "notFound" && d.status !== "redirected")]);
                         this.clearExpiredCache();
                       }
                     });
@@ -1365,10 +1372,10 @@ var RouterCore = class {
             if (isRedirect(err)) {
               redirect2 = err;
             } else if (isNotFound(err)) notFound = err;
-            const nextStatusCode = redirect2 ? redirect2.status : notFound ? 404 : this.stores.activeMatchesSnapshot.state.some((d) => d.status === "error") ? 500 : 200;
+            const nextStatusCode = redirect2 ? redirect2.status : notFound ? 404 : this.stores.matches.get().some((d) => d.status === "error") ? 500 : 200;
             this.batch(() => {
-              this.stores.statusCode.setState(() => nextStatusCode);
-              this.stores.redirect.setState(() => redirect2);
+              this.stores.statusCode.set(nextStatusCode);
+              this.stores.redirect.set(redirect2);
             });
           }
           if (this.latestLoadPromise === loadPromise) {
@@ -1384,8 +1391,8 @@ var RouterCore = class {
       while (this.latestLoadPromise && loadPromise !== this.latestLoadPromise) await this.latestLoadPromise;
       let newStatusCode = void 0;
       if (this.hasNotFoundMatch()) newStatusCode = 404;
-      else if (this.stores.activeMatchesSnapshot.state.some((d) => d.status === "error")) newStatusCode = 500;
-      if (newStatusCode !== void 0) this.stores.statusCode.setState(() => newStatusCode);
+      else if (this.stores.matches.get().some((d) => d.status === "error")) newStatusCode = 500;
+      if (newStatusCode !== void 0) this.stores.statusCode.set(newStatusCode);
     };
     this.startViewTransition = (fn) => {
       const shouldViewTransition = this.shouldViewTransition ?? this.options.defaultViewTransition;
@@ -1394,7 +1401,7 @@ var RouterCore = class {
         let startViewTransitionParams;
         if (typeof shouldViewTransition === "object" && this.isViewTransitionTypesSupported) {
           const next = this.latestLocation;
-          const prevLocation = this.stores.resolvedLocation.state;
+          const prevLocation = this.stores.resolvedLocation.get();
           const resolvedViewTransitionTypes = typeof shouldViewTransition.types === "function" ? shouldViewTransition.types(getLocationChangeInfo(next, prevLocation)) : shouldViewTransition.types;
           if (resolvedViewTransitionTypes === false) {
             fn();
@@ -1410,27 +1417,27 @@ var RouterCore = class {
     };
     this.updateMatch = (id, updater) => {
       this.startTransition(() => {
-        const pendingMatch = this.stores.pendingMatchStoresById.get(id);
+        const pendingMatch = this.stores.pendingMatchStores.get(id);
         if (pendingMatch) {
-          pendingMatch.setState(updater);
+          pendingMatch.set(updater);
           return;
         }
-        const activeMatch = this.stores.activeMatchStoresById.get(id);
+        const activeMatch = this.stores.matchStores.get(id);
         if (activeMatch) {
-          activeMatch.setState(updater);
+          activeMatch.set(updater);
           return;
         }
-        const cachedMatch = this.stores.cachedMatchStoresById.get(id);
+        const cachedMatch = this.stores.cachedMatchStores.get(id);
         if (cachedMatch) {
-          const next = updater(cachedMatch.state);
+          const next = updater(cachedMatch.get());
           if (next.status === "redirected") {
-            if (this.stores.cachedMatchStoresById.delete(id)) this.stores.cachedMatchesId.setState((prev) => prev.filter((matchId) => matchId !== id));
-          } else cachedMatch.setState(() => next);
+            if (this.stores.cachedMatchStores.delete(id)) this.stores.cachedIds.set((prev) => prev.filter((matchId) => matchId !== id));
+          } else cachedMatch.set(next);
         }
       });
     };
     this.getMatch = (matchId) => {
-      return this.stores.cachedMatchStoresById.get(matchId)?.state ?? this.stores.pendingMatchStoresById.get(matchId)?.state ?? this.stores.activeMatchStoresById.get(matchId)?.state;
+      return this.stores.cachedMatchStores.get(matchId)?.get() ?? this.stores.pendingMatchStores.get(matchId)?.get() ?? this.stores.matchStores.get(matchId)?.get();
     };
     this.invalidate = (opts) => {
       const invalidate = (d) => {
@@ -1445,9 +1452,9 @@ var RouterCore = class {
         return d;
       };
       this.batch(() => {
-        this.stores.setActiveMatches(this.stores.activeMatchesSnapshot.state.map(invalidate));
-        this.stores.setCachedMatches(this.stores.cachedMatchesSnapshot.state.map(invalidate));
-        this.stores.setPendingMatches(this.stores.pendingMatchesSnapshot.state.map(invalidate));
+        this.stores.setMatches(this.stores.matches.get().map(invalidate));
+        this.stores.setCached(this.stores.cachedMatches.get().map(invalidate));
+        this.stores.setPending(this.stores.pendingMatches.get().map(invalidate));
       });
       this.shouldViewTransition = false;
       return this.load({ sync: opts?.sync });
@@ -1477,8 +1484,8 @@ var RouterCore = class {
     };
     this.clearCache = (opts) => {
       const filter = opts?.filter;
-      if (filter !== void 0) this.stores.setCachedMatches(this.stores.cachedMatchesSnapshot.state.filter((m) => !filter(m)));
-      else this.stores.setCachedMatches([]);
+      if (filter !== void 0) this.stores.setCached(this.stores.cachedMatches.get().filter((m) => !filter(m)));
+      else this.stores.setCached([]);
     };
     this.clearExpiredCache = () => {
       const now = Date.now();
@@ -1499,12 +1506,12 @@ var RouterCore = class {
         preload: true,
         dest: opts
       });
-      const activeMatchIds = /* @__PURE__ */ new Set([...this.stores.matchesId.state, ...this.stores.pendingMatchesId.state]);
-      const loadedMatchIds = /* @__PURE__ */ new Set([...activeMatchIds, ...this.stores.cachedMatchesId.state]);
+      const activeMatchIds = /* @__PURE__ */ new Set([...this.stores.matchesId.get(), ...this.stores.pendingIds.get()]);
+      const loadedMatchIds = /* @__PURE__ */ new Set([...activeMatchIds, ...this.stores.cachedIds.get()]);
       const matchesToCache = matches.filter((match) => !loadedMatchIds.has(match.id));
       if (matchesToCache.length) {
-        const cachedMatches = this.stores.cachedMatchesSnapshot.state;
-        this.stores.setCachedMatches([...cachedMatches, ...matchesToCache]);
+        const cachedMatches = this.stores.cachedMatches.get();
+        this.stores.setCached([...cachedMatches, ...matchesToCache]);
       }
       try {
         matches = await loadMatches({
@@ -1538,8 +1545,8 @@ var RouterCore = class {
         leaveParams: true
       };
       const next = this.buildLocation(matchLocation);
-      if (opts?.pending && this.stores.status.state !== "pending") return false;
-      const baseLocation = (opts?.pending === void 0 ? !this.stores.isLoading.state : opts.pending) ? this.latestLocation : this.stores.resolvedLocation.state || this.stores.location.state;
+      if (opts?.pending && this.stores.status.get() !== "pending") return false;
+      const baseLocation = (opts?.pending === void 0 ? !this.stores.isLoading.get() : opts.pending) ? this.latestLocation : this.stores.resolvedLocation.get() || this.stores.location.get();
       const match = findSingleMatch(next.pathname, opts?.caseSensitive ?? false, opts?.fuzzy ?? false, baseLocation.pathname, this.processedTree);
       if (!match) return false;
       if (location.params) {
@@ -1549,7 +1556,7 @@ var RouterCore = class {
       return match.rawParams;
     };
     this.hasNotFoundMatch = () => {
-      return this.stores.activeMatchesSnapshot.state.some((d) => d.status === "notFound" || d.globalNotFound);
+      return this.stores.matches.get().some((d) => d.status === "notFound" || d.globalNotFound);
     };
     this.getStoreConfig = getStoreConfig;
     this.update({
@@ -1573,7 +1580,7 @@ var RouterCore = class {
     return !!this.options.isPrerendering;
   }
   get state() {
-    return this.stores.__store.state;
+    return this.stores.__store.get();
   }
   setRoutes({ routesById, routesByPath, processedTree }) {
     this.routesById = routesById;
@@ -1585,6 +1592,14 @@ var RouterCore = class {
       this.routesById[notFoundRoute.id] = notFoundRoute;
     }
   }
+  getRouteBranch(route) {
+    let branch = this.routeBranchCache.get(route);
+    if (!branch) {
+      branch = buildRouteBranch(route);
+      this.routeBranchCache.set(route, branch);
+    }
+    return branch;
+  }
   get looseRoutesById() {
     return this.routesById;
   }
@@ -1593,7 +1608,7 @@ var RouterCore = class {
   }
   matchRoutesInternal(next, opts) {
     const matchedRoutesResult = this.getMatchedRoutes(next.pathname);
-    const { foundRoute, routeParams, parsedParams } = matchedRoutesResult;
+    const { foundRoute, routeParams } = matchedRoutesResult;
     let { matchedRoutes } = matchedRoutesResult;
     let isGlobalNotFound = false;
     if (foundRoute ? foundRoute.path !== "/" && routeParams["**"] : trimPathRight(next.pathname)) if (this.options.notFoundRoute) matchedRoutes = [...matchedRoutes, this.options.notFoundRoute];
@@ -1601,7 +1616,7 @@ var RouterCore = class {
     const globalNotFoundRouteId = isGlobalNotFound ? findGlobalNotFoundRouteId(this.options.notFoundMode, matchedRoutes) : void 0;
     const matches = new Array(matchedRoutes.length);
     const previousActiveMatchesByRouteId = /* @__PURE__ */ new Map();
-    for (const store of this.stores.activeMatchStoresById.values()) if (store.routeId) previousActiveMatchesByRouteId.set(store.routeId, store.state);
+    for (const store of this.stores.matchStores.values()) if (store.routeId) previousActiveMatchesByRouteId.set(store.routeId, store.get());
     for (let index = 0; index < matchedRoutes.length; index++) {
       const route = matchedRoutes[index];
       const parentMatch = matches[index - 1];
@@ -1645,7 +1660,7 @@ var RouterCore = class {
       const strictParams = existingMatch?._strictParams ?? usedParams;
       let paramsError = void 0;
       if (!existingMatch) try {
-        extractStrictParams(route, usedParams, parsedParams, strictParams);
+        extractStrictParams(route, strictParams);
       } catch (err) {
         if (isNotFound(err) || isRedirect(err)) paramsError = err;
         else paramsError = new PathParamError(err.message, { cause: err });
@@ -1751,22 +1766,22 @@ var RouterCore = class {
   * operations like AbortController, ControlledPromise, loaderDeps, and full match objects.
   */
   matchRoutesLightweight(location) {
-    const { matchedRoutes, routeParams, parsedParams } = this.getMatchedRoutes(location.pathname);
+    const { matchedRoutes, routeParams } = this.getMatchedRoutes(location.pathname);
     const lastRoute = last(matchedRoutes);
     const accumulatedSearch = { ...location.search };
     for (const route of matchedRoutes) try {
       Object.assign(accumulatedSearch, validateSearch(route.options.validateSearch, accumulatedSearch));
     } catch {
     }
-    const lastStateMatchId = last(this.stores.matchesId.state);
-    const lastStateMatch = lastStateMatchId && this.stores.activeMatchStoresById.get(lastStateMatchId)?.state;
+    const lastStateMatchId = last(this.stores.matchesId.get());
+    const lastStateMatch = lastStateMatchId && this.stores.matchStores.get(lastStateMatchId)?.get();
     const canReuseParams = lastStateMatch && lastStateMatch.routeId === lastRoute.id && lastStateMatch.pathname === location.pathname;
     let params;
     if (canReuseParams) params = lastStateMatch.params;
     else {
       const strictParams = Object.assign(/* @__PURE__ */ Object.create(null), routeParams);
       for (const route of matchedRoutes) try {
-        extractStrictParams(route, routeParams, parsedParams ?? {}, strictParams);
+        extractStrictParams(route, strictParams);
       } catch {
       }
       params = strictParams;
@@ -1811,18 +1826,15 @@ function getMatchedRoutes({ pathname, routesById, processedTree }) {
   const routeParams = /* @__PURE__ */ Object.create(null);
   const trimmedPath = trimPathRight(pathname);
   let foundRoute = void 0;
-  let parsedParams = void 0;
   const match = findRouteMatch(trimmedPath, processedTree, true);
   if (match) {
     foundRoute = match.route;
     Object.assign(routeParams, match.rawParams);
-    parsedParams = Object.assign(/* @__PURE__ */ Object.create(null), match.parsedParams);
   }
   return {
     matchedRoutes: match?.branch || [routesById["__root__"]],
     routeParams,
-    foundRoute,
-    parsedParams
+    foundRoute
   };
 }
 function applySearchMiddleware({ search, dest, destRoutes, _includeValidateSearch }) {
@@ -1894,12 +1906,11 @@ function findGlobalNotFoundRouteId(notFoundMode, routes) {
   }
   return rootRouteId;
 }
-function extractStrictParams(route, referenceParams, parsedParams, accumulatedParams) {
+function extractStrictParams(route, accumulatedParams) {
   const parseParams = route.options.params?.parse ?? route.options.parseParams;
-  if (parseParams) if (route.options.skipRouteOnParseError) {
-    for (const key in referenceParams) if (key in parsedParams) accumulatedParams[key] = parsedParams[key];
-  } else {
+  if (parseParams) {
     const result = parseParams(accumulatedParams);
+    if (result === false) throw new Error("Route params.parse returned false for a matched route");
     Object.assign(accumulatedParams, result);
   }
 }
@@ -1979,9 +1990,9 @@ function useMatch(opts) {
   const router2 = useRouter();
   const nearestMatchId = reactExports.useContext(opts.from ? dummyMatchContext : matchContext);
   const key = opts.from ?? nearestMatchId;
-  const matchStore = key ? opts.from ? router2.stores.getMatchStoreByRouteId(key) : router2.stores.activeMatchStoresById.get(key) : void 0;
+  const matchStore = key ? opts.from ? router2.stores.getRouteMatchStore(key) : router2.stores.matchStores.get(key) : void 0;
   {
-    const match = matchStore?.state;
+    const match = matchStore?.get();
     if ((opts.shouldThrow ?? true) && !match) {
       invariant();
     }
@@ -2050,7 +2061,7 @@ requireReactDom();
 function useLinkProps(options, forwardedRef) {
   const router2 = useRouter();
   const innerRef = useForwardedRef(forwardedRef);
-  const { activeProps, inactiveProps, activeOptions, to, preload: userPreload, preloadDelay: userPreloadDelay, hashScrollIntoView, replace, startTransition, resetScroll, viewTransition, children, target, disabled, style, className, onClick, onBlur, onFocus, onMouseEnter, onMouseLeave, onTouchStart, ignoreBlocker, params: _params, search: _search, hash: _hash, state: _state, mask: _mask, reloadDocument: _reloadDocument, unsafeRelative: _unsafeRelative, from: _from, _fromLocation, ...propsSafeToSpread } = options;
+  const { activeProps, inactiveProps, activeOptions, to, preload: userPreload, preloadDelay: userPreloadDelay, preloadIntentProximity: _preloadIntentProximity, hashScrollIntoView, replace, startTransition, resetScroll, viewTransition, children, target, disabled, style, className, onClick, onBlur, onFocus, onMouseEnter, onMouseLeave, onTouchStart, ignoreBlocker, params: _params, search: _search, hash: _hash, state: _state, mask: _mask, reloadDocument: _reloadDocument, unsafeRelative: _unsafeRelative, from: _from, _fromLocation, ...propsSafeToSpread } = options;
   {
     const safeInternal = isSafeInternal(to);
     if (typeof to === "string" && !safeInternal && to.indexOf(":") > -1) try {
@@ -2105,7 +2116,7 @@ function useLinkProps(options, forwardedRef) {
     })();
     const isActive2 = (() => {
       if (externalLink2) return false;
-      const currentLocation2 = router2.stores.location.state;
+      const currentLocation2 = router2.stores.location.get();
       const exact = activeOptions?.exact ?? false;
       if (exact) {
         if (!exactPathTest(currentLocation2.pathname, next2.pathname, router2.basepath)) return false;
@@ -2116,8 +2127,8 @@ function useLinkProps(options, forwardedRef) {
       }
       if (activeOptions?.includeSearch ?? true) {
         if (currentLocation2.search !== next2.search) {
-          const currentSearchEmpty = !currentLocation2.search || typeof currentLocation2.search === "object" && Object.keys(currentLocation2.search).length === 0;
-          const nextSearchEmpty = !next2.search || typeof next2.search === "object" && Object.keys(next2.search).length === 0;
+          const currentSearchEmpty = !currentLocation2.search || typeof currentLocation2.search === "object" && !hasKeys(currentLocation2.search);
+          const nextSearchEmpty = !next2.search || typeof next2.search === "object" && !hasKeys(next2.search);
           if (!(currentSearchEmpty && nextSearchEmpty)) {
             if (!deepEqual(currentLocation2.search, next2.search, {
               partial: !exact,
@@ -2339,7 +2350,6 @@ function createRootRoute(options) {
   return new RootRoute(options);
 }
 function createFileRoute(path) {
-  if (typeof path === "object") return new FileRoute(path, { silent: true }).createRoute(path);
   return new FileRoute(path, { silent: true }).createRoute;
 }
 var FileRoute = class {
@@ -2405,8 +2415,9 @@ var Router = class extends RouterCore {
     super(options, getStoreFactory);
   }
 };
-function Asset({ tag, attrs, children, nonce }) {
-  switch (tag) {
+function Asset(asset) {
+  const { attrs, children, nonce } = asset;
+  switch (asset.tag) {
     case "title":
       return /* @__PURE__ */ jsxRuntimeExports.jsx("title", {
         ...attrs,
@@ -2421,10 +2432,12 @@ function Asset({ tag, attrs, children, nonce }) {
     case "link":
       return /* @__PURE__ */ jsxRuntimeExports.jsx("link", {
         ...attrs,
+        precedence: attrs?.precedence ?? (attrs?.rel === "stylesheet" ? "default" : void 0),
         nonce,
         suppressHydrationWarning: true
       });
     case "style":
+      if (asset.inlineCss && false) ;
       return /* @__PURE__ */ jsxRuntimeExports.jsx("style", {
         ...attrs,
         dangerouslySetInnerHTML: { __html: children },
@@ -2554,15 +2567,30 @@ function buildTagsFromMatches(router2, nonce, matches, assetCrossOrigin) {
     }
   }));
   const manifest = router2.ssr?.manifest;
-  const assetLinks = matches.map((match) => manifest?.routes[match.routeId]?.assets ?? []).filter(Boolean).flat(1).filter((asset) => asset.tag === "link").map((asset) => ({
-    tag: "link",
-    attrs: {
-      ...asset.attrs,
-      crossOrigin: getAssetCrossOrigin(assetCrossOrigin, "stylesheet") ?? asset.attrs?.crossOrigin,
-      suppressHydrationWarning: true,
-      nonce
+  const assetLinks = matches.map((match) => manifest?.routes[match.routeId]?.assets ?? []).filter(Boolean).flat(1).flatMap((asset) => {
+    if (asset.tag === "link") {
+      if (isInlinableStylesheet(manifest, asset)) return [];
+      return [{
+        tag: "link",
+        attrs: {
+          ...asset.attrs,
+          crossOrigin: getAssetCrossOrigin(assetCrossOrigin, "stylesheet") ?? asset.attrs?.crossOrigin,
+          suppressHydrationWarning: true,
+          nonce
+        }
+      }];
     }
-  }));
+    if (asset.tag === "style") return [{
+      tag: "style",
+      attrs: {
+        ...asset.attrs,
+        nonce
+      },
+      children: asset.children,
+      ...asset.inlineCss ? { inlineCss: true } : {}
+    }];
+    return [];
+  });
   const preloadLinks = [];
   matches.map((match) => router2.looseRoutesById[match.routeId]).forEach((route) => router2.ssr?.manifest?.routes[route.id]?.preloads?.filter(Boolean).forEach((preload) => {
     const preloadLink = resolveManifestAssetLink(preload);
@@ -2604,7 +2632,7 @@ function buildTagsFromMatches(router2, nonce, matches, assetCrossOrigin) {
 var useTags = (assetCrossOrigin) => {
   const router2 = useRouter();
   const nonce = router2.options.ssr?.nonce;
-  return buildTagsFromMatches(router2, nonce, router2.stores.activeMatchesSnapshot.state, assetCrossOrigin);
+  return buildTagsFromMatches(router2, nonce, router2.stores.matches.get(), assetCrossOrigin);
 };
 function uniqBy(arr, fn) {
   const seen = /* @__PURE__ */ new Set();
@@ -2653,8 +2681,9 @@ var Scripts = () => {
     children
   }));
   {
-    const assetScripts = getAssetScripts(router2.stores.activeMatchesSnapshot.state);
-    return renderScripts(router2, getScripts(router2.stores.activeMatchesSnapshot.state), assetScripts);
+    const activeMatches = router2.stores.matches.get();
+    const assetScripts = getAssetScripts(activeMatches);
+    return renderScripts(router2, getScripts(activeMatches), assetScripts);
   }
 };
 function renderScripts(router2, scripts, assetScripts) {
@@ -2667,7 +2696,7 @@ function renderScripts(router2, scripts, assetScripts) {
     key: `tsr-scripts-${asset.tag}-${i}`
   })) });
 }
-const appCss = "/assets/styles-BSKQfNti.css";
+const appCss = "/assets/styles-BwaBPyJF.css";
 function NotFoundComponent() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex min-h-screen items-center justify-center bg-background px-4", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-md text-center", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "text-7xl font-bold text-foreground", children: "404" }),
@@ -2730,7 +2759,7 @@ function RootShell({ children }) {
 function RootComponent() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(Outlet, {});
 }
-const $$splitComponentImporter$3 = () => import("./pricing-BR8sNjaZ.js");
+const $$splitComponentImporter$3 = () => import("./pricing-IJSHsizt.js");
 const Route$3 = createFileRoute("/pricing")({
   head: () => ({
     meta: [{
@@ -2748,7 +2777,7 @@ const Route$3 = createFileRoute("/pricing")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$3, "component")
 });
-const $$splitComponentImporter$2 = () => import("./predictor-DBX3bY7m.js");
+const $$splitComponentImporter$2 = () => import("./predictor-vAQ4x3HL.js");
 const Route$2 = createFileRoute("/predictor")({
   head: () => ({
     meta: [{
@@ -2766,7 +2795,7 @@ const Route$2 = createFileRoute("/predictor")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$2, "component")
 });
-const $$splitComponentImporter$1 = () => import("./api-8YzOpMMj.js");
+const $$splitComponentImporter$1 = () => import("./api-BRCA8T9t.js");
 const Route$1 = createFileRoute("/api")({
   head: () => ({
     meta: [{
@@ -2784,7 +2813,7 @@ const Route$1 = createFileRoute("/api")({
   }),
   component: lazyRouteComponent($$splitComponentImporter$1, "component")
 });
-const $$splitComponentImporter = () => import("./index-BWhtbZyi.js");
+const $$splitComponentImporter = () => import("./index-CIWNzkof.js");
 const Route2 = createFileRoute("/")({
   head: () => ({
     meta: [{
