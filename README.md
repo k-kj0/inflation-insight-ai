@@ -121,8 +121,17 @@ npm run build
 - [ ] Email digest — weekly macro briefing
 - [ ] More economies (India, China, South Korea)
 - [ ] PDF export of forecasts
+      
 ---
- 
+ ### 🛠️ Development & Architecture Note
+This project was initially prototyped using **Lovable** to rapidly scaffold the UI layouts and base component trees. Following the initial generation, I took complete ownership of the codebase to:
+* **Integrate Live APIs:** Wired up real-time server-side streaming inference with Anthropic's Claude 3.5 Sonnet.
+* **Optimize Performance:** Migrated modules to run seamlessly using the **Bun** build tool for ultra-fast local execution.
+* **Refactor State Management:** Leveraged **TanStack Router** to manage application routing and prediction state cleanly.
+
+*The automated commit footprints from the scaffolding agent remain visible in the contributor graph, but all core logic, API structures, and deployment pipelines were manually written and managed by me.*
+
+---
 ## Contributing
  
 Pull requests are welcome! For major changes, please open an issue first to discuss what you'd like to change.
